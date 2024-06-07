@@ -77,11 +77,30 @@ class BdrTest {
 
     @Test
     fun `Resolve issuer metadata`() = runTest {
-        Bdr.testMetaDataResolution(enableHttLogging = false)
+        Bdr.testMetaDataResolution(enableHttLogging = true)
     }
 
     @Test
-    fun `Issue mso_mdoc credential using light profile`() = runBlocking {
-        Bdr.testIssuanceWithAuthorizationCodeFlow(Bdr.LightProfileCredCfgId, enableHttLogging = true)
+    fun `Issue mso_mdoc credential using light profile using CWT proofs`() = runBlocking {
+        Bdr.testIssuanceWithAuthorizationCodeFlow(
+            Bdr.LightProfileCredCfgId,
+            enableHttLogging = true,
+            ProofTypeMetaPreference.FavorCWT
+        )
+    }
+
+    @Test
+    fun `Issue mso_mdoc credential using light profile using JWT proofs`() = runBlocking {
+        Bdr.testIssuanceWithAuthorizationCodeFlow(
+            Bdr.LightProfileCredCfgId,
+            enableHttLogging = false,
+            ProofTypeMetaPreference.FavorJWT
+        )
+    }
+
+    @Test
+    fun `Issue sd-jwt-vc credential using authorization code flow`() = runTest {
+        val id = CredentialConfigurationIdentifier("GainPocSimpleIdentity")
+        Bdr.testIssuanceWithAuthorizationCodeFlow(id, enableHttLogging = true, ProofTypeMetaPreference.FavorJWT)
     }
 }
