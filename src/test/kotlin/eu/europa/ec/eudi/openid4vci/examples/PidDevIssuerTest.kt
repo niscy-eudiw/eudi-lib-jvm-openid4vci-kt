@@ -17,7 +17,6 @@ package eu.europa.ec.eudi.openid4vci.examples
 
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.DisplayName
-import kotlin.test.Ignore
 import kotlin.test.Test
 
 @DisplayName("PID DEV Issuer Test")

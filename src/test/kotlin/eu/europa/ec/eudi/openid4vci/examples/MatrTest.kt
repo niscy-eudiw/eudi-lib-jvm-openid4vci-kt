@@ -24,7 +24,6 @@ import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.DisplayName
 import java.net.URI
 import java.time.Clock
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
@@ -59,7 +58,7 @@ class MatrTest {
 
     @Test
     fun `Resolve issuer's metadata`() = runTest {
-        val (issuerMeta, authServersMeta) = Matr.testMetaDataResolution(enableHttLogging = false)
+        val (issuerMeta, authServersMeta) = Matr.testMetaDataResolution(enableHttLogging = true)
         assertEquals(1, authServersMeta.size)
         assertContains(issuerMeta.credentialConfigurationsSupported.keys, Matr.LightProfileCredCfgId)
     }
