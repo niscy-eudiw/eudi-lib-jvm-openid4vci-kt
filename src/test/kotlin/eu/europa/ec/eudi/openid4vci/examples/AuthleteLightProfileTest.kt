@@ -180,7 +180,7 @@ class AuthleteLightProfileTest {
             credCfgId = Authlete.LightProfileCredCfgId,
             enableHttLogging = false,
             claimSetToRequest = ::claimSetToRequest,
-            popSignerPreference = ProofTypeMetaPreference.FavorCWT
+            popSignerPreference = ProofTypeMetaPreference.FavorCWT,
         )
     }
 
