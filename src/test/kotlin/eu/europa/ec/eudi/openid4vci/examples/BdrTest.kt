@@ -37,7 +37,17 @@ private object Bdr :
     CanBeUsedWithVciLib {
 
     override val issuerId = IssuerId
-    val LightProfileCredCfgId = CredentialConfigurationIdentifier("LspPotentialInteropT1Light")
+
+    /**
+     * mDL in mso_mdoc
+     */
+    val LspPotentialInteropT1Light = CredentialConfigurationIdentifier("LspPotentialInteropT1Light")
+
+    /**
+     * PID in sd-jwt-vc
+     */
+    val LspPotentialInteropT2Light = CredentialConfigurationIdentifier("LspPotentialInteropT2Light")
+    val GainPocSimpleIdentity = CredentialConfigurationIdentifier("GainPocSimpleIdentity")
 
     override val cfg: OpenId4VCIConfig = OpenId4VCIConfig(
         clientId = "eudiw",
@@ -77,30 +87,42 @@ class BdrTest {
 
     @Test
     fun `Resolve issuer metadata`() = runTest {
-        Bdr.testMetaDataResolution(enableHttLogging = true)
+        Bdr.testMetaDataResolution(enableHttLogging = false)
     }
 
     @Test
-    fun `Issue mso_mdoc credential using light profile using CWT proofs`() = runBlocking {
+    fun `Issue mDL in mso_mdoc using light profile, CWT proofs`() = runTest {
         Bdr.testIssuanceWithAuthorizationCodeFlow(
-            Bdr.LightProfileCredCfgId,
-            enableHttLogging = true,
-            ProofTypeMetaPreference.FavorCWT
-        )
-    }
-
-    @Test
-    fun `Issue mso_mdoc credential using light profile using JWT proofs`() = runBlocking {
-        Bdr.testIssuanceWithAuthorizationCodeFlow(
-            Bdr.LightProfileCredCfgId,
+            Bdr.LspPotentialInteropT1Light,
             enableHttLogging = false,
-            ProofTypeMetaPreference.FavorJWT
+            ProofTypeMetaPreference.FavorCWT,
         )
     }
 
     @Test
-    fun `Issue sd-jwt-vc credential using authorization code flow`() = runTest {
-        val id = CredentialConfigurationIdentifier("GainPocSimpleIdentity")
-        Bdr.testIssuanceWithAuthorizationCodeFlow(id, enableHttLogging = true, ProofTypeMetaPreference.FavorJWT)
+    fun `Issue mDL in mso_mdoc using light profile, JWT proofs`() = runTest {
+        Bdr.testIssuanceWithAuthorizationCodeFlow(
+            Bdr.LspPotentialInteropT1Light,
+            enableHttLogging = false,
+            ProofTypeMetaPreference.FavorJWT,
+        )
+    }
+
+    @Test
+    fun `Issue PID in sd-jwt-vc sing light profile, CWT proofs`() = runBlocking {
+        Bdr.testIssuanceWithAuthorizationCodeFlow(
+            Bdr.LspPotentialInteropT2Light,
+            enableHttLogging = false,
+            ProofTypeMetaPreference.FavorCWT,
+        )
+    }
+
+    @Test
+    fun `Issue PID in sd-jwt-vc using light profile, JWT proofs`() = runTest {
+        Bdr.testIssuanceWithAuthorizationCodeFlow(
+            Bdr.LspPotentialInteropT2Light,
+            enableHttLogging = false,
+            ProofTypeMetaPreference.FavorJWT,
+        )
     }
 }
