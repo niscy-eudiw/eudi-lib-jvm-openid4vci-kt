@@ -39,6 +39,7 @@ import java.time.Clock
 import kotlin.test.*
 
 private object Authlete :
+    HasIssuerId,
     CanBeUsedWithVciLib,
     CanAuthorizeIssuance<Authlete.User>,
     HasTestUser<Authlete.User>,
@@ -53,7 +54,7 @@ private object Authlete :
     val IdentityCredentialCredCfgId = CredentialConfigurationIdentifier("IdentityCredential")
     val MdlCredCfgId = CredentialConfigurationIdentifier("org.iso.18013.5.1.mDL")
 
-    val IssuerId = CredentialIssuerId(BASE_URL).getOrThrow()
+    override val issuerId = CredentialIssuerId(BASE_URL).getOrThrow()
 
     override val cfg: OpenId4VCIConfig
         get() = LightProfileCfg
@@ -141,10 +142,7 @@ class AuthleteLightProfileTest {
 
     @Test
     fun `Resolve issuer's metadata`() = runTest {
-        val (_, authServersMeta) = createHttpClient(enableLogging = false).use { httpClient ->
-            Issuer.metaData(httpClient, Authlete.IssuerId)
-        }
-        assertEquals(1, authServersMeta.size)
+        Authlete.testMetaDataResolution(enableHttLogging = false)
     }
 
     @Test
@@ -182,6 +180,7 @@ class AuthleteLightProfileTest {
             credCfgId = Authlete.LightProfileCredCfgId,
             enableHttLogging = false,
             claimSetToRequest = ::claimSetToRequest,
+            popSignerPreference = ProofTypeMetaPreference.FavorCWT
         )
     }
 
@@ -258,7 +257,7 @@ private suspend fun Issuer.submitBatchCredentialRequest(
             val claimSetToRequest = claimSetToRequest(cfg)
             val requestPayload = IssuanceRequestPayload.ConfigurationBased(credentialConfigurationId, claimSetToRequest)
             val popSigner = when (authorizedRequest) {
-                is AuthorizedRequest.ProofRequired -> popSigner(credentialConfigurationId)
+                is AuthorizedRequest.ProofRequired -> popSigner(credentialConfigurationId, ProofTypeMetaPreference.FavorJWT)
                 is AuthorizedRequest.NoProofRequired -> null
             }
             put(requestPayload, popSigner)
