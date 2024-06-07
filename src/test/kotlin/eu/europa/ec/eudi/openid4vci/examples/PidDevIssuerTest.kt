@@ -19,7 +19,6 @@ import eu.europa.ec.eudi.openid4vci.CredentialConfigurationIdentifier
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.DisplayName
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
