@@ -24,6 +24,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.DisplayName
 import java.net.URI
 import java.time.Clock
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
@@ -37,6 +38,10 @@ private object Matr :
     CanRequestForCredentialOffer<NoUser> by CanRequestForCredentialOffer.onlyStatelessAuthorizationCode(IssuerId) {
 
     override val issuerId = IssuerId
+
+    // TODO MATR requires specific client_id
+    //  Test fail due to tha absence of a known client_id
+
     override val cfg = OpenId4VCIConfig(
         clientId = "eudiw",
         authFlowRedirectionURI = URI.create("https://nextdev-api.authlete.net/api/mock/redirection"),
