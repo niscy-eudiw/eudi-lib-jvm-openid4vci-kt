@@ -18,7 +18,10 @@ package eu.europa.ec.eudi.openid4vci.examples
 import com.nimbusds.jose.jwk.Curve
 import eu.europa.ec.eudi.openid4vci.*
 import io.ktor.client.*
+import io.ktor.client.request.*
 import io.ktor.client.statement.*
+import io.ktor.http.*
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -27,18 +30,17 @@ import java.time.Clock
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
 
-private val PanasonicZetasIssuerId =
+private val PanasonicZetesIssuerId =
     CredentialIssuerId("https://mdlpilot.japaneast.cloudapp.azure.com:8017").getOrThrow()
 
-private object PanasonicZetas :
+private object PanasonicZetes :
     HasIssuerId,
     HasTestUser<NoUser> by HasTestUser.HasNoTestUser,
     CanBeUsedWithVciLib,
     CanAuthorizeIssuance<NoUser>,
-    CanRequestForCredentialOffer<NoUser>
-    by CanRequestForCredentialOffer.onlyStatelessAuthorizationCode(PanasonicZetasIssuerId) {
+    CanRequestForCredentialOffer<NoUser> {
 
-    override val issuerId = PanasonicZetasIssuerId
+    override val issuerId = PanasonicZetesIssuerId
     val LightProfileCfgId = CredentialConfigurationIdentifier("org.iso.18013.5.1.mDL")
 
     override val cfg: OpenId4VCIConfig = OpenId4VCIConfig(
@@ -48,7 +50,7 @@ private object PanasonicZetas :
         credentialResponseEncryptionPolicy = CredentialResponseEncryptionPolicy.SUPPORTED,
         dPoPSigner = CryptoGenerator.ecProofSigner(),
         authorizeIssuanceConfig = AuthorizeIssuanceConfig.FAVOR_SCOPES,
-        parUsage = ParUsage.Never,
+        parUsage = ParUsage.IfSupported,
         clock = Clock.systemDefaultZone(),
     )
 
@@ -56,20 +58,33 @@ private object PanasonicZetas :
         loginResponse: HttpResponse,
         user: NoUser,
     ): HttpResponse = loginResponse
+
+    override suspend fun requestCredentialOffer(httpClient: HttpClient, form: CredentialOfferForm<NoUser>): URI {
+        val url = "https://mdlpilot.japaneast.cloudapp.azure.com:8017/credential-offer/10?profile=1"
+        httpClient.get(issuerId.value.value)
+        val response = httpClient.get(url){
+            headers{
+                append("Accept", "/")
+            }
+        }
+        require(response.status.isSuccess())
+        return URI.create(response.bodyAsText())
+
+    }
 }
 
 @DisplayName("Using Panasonic-Zetas Issuer, VCI Lib should be able to")
-class PanasonicZetasTest {
+class PanasonicZetesTest {
 
     @Test
-    fun `Resolve issuer's metadata`() = runTest {
-        val (issuerMeta, authServersMeta) = PanasonicZetas.testMetaDataResolution(true)
+    fun `Resolve issuer's metadata`() = runBlocking {
+        val (issuerMeta, authServersMeta) = PanasonicZetes.testMetaDataResolution(true)
         assertEquals(1, authServersMeta.size)
-        assertContains(issuerMeta.credentialConfigurationsSupported.keys, PanasonicZetas.LightProfileCfgId)
+        assertContains(issuerMeta.credentialConfigurationsSupported.keys, PanasonicZetes.LightProfileCfgId)
     }
 
     @Test
     fun `Issue mso_mdoc credential using light profile`() = runTest {
-        PanasonicZetas.testIssuanceWithAuthorizationCodeFlow(PanasonicZetas.LightProfileCfgId, enableHttLogging = true)
+        PanasonicZetes.testIssuanceWithAuthorizationCodeFlow(PanasonicZetes.LightProfileCfgId, enableHttLogging = true)
     }
 }
