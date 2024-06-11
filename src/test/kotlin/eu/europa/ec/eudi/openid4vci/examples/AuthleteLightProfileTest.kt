@@ -75,7 +75,6 @@ private object Authlete :
         user = testUser,
         credentialConfigurationIds = setOf(LightProfileCredCfgId),
         issuerStateIncluded = true,
-        credentialOfferEndpoint = "eudi-openid4vci://",
     )
 
     override suspend fun requestCredentialOffer(httpClient: HttpClient, form: CredentialOfferForm<User>): URI = coroutineScope {
@@ -178,7 +177,7 @@ class AuthleteLightProfileTest {
     fun `Issue mso_mdoc credential using light profile`() = runBlocking {
         Authlete.testIssuanceWithAuthorizationCodeFlow(
             credCfgId = Authlete.LightProfileCredCfgId,
-            enableHttLogging = false,
+            enableHttLogging = true,
             claimSetToRequest = ::claimSetToRequest,
             popSignerPreference = ProofTypeMetaPreference.FavorCWT,
         )
