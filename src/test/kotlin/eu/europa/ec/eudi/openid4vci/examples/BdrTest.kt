@@ -47,16 +47,15 @@ private object Bdr :
      * PID in sd-jwt-vc
      */
     val LspPotentialInteropT2Light = CredentialConfigurationIdentifier("LspPotentialInteropT2Light")
-    val GainPocSimpleIdentity = CredentialConfigurationIdentifier("GainPocSimpleIdentity")
 
     override val cfg: OpenId4VCIConfig = OpenId4VCIConfig(
-        clientId = "eudiw",
-        authFlowRedirectionURI = URI.create("https://oauthdebugger.com/debug"),
+        clientId = "eudiw", // We can use whatever we like
+        authFlowRedirectionURI = URI.create("https://oauthdebugger.com/debug"), //needs to be replaced with our wallet's redirect_uri
         keyGenerationConfig = KeyGenerationConfig(Curve.P_256, 2048),
         credentialResponseEncryptionPolicy = CredentialResponseEncryptionPolicy.SUPPORTED,
-        dPoPSigner = null,
-        authorizeIssuanceConfig = AuthorizeIssuanceConfig.FAVOR_SCOPES,
-        parUsage = ParUsage.Never,
+        dPoPSigner = CryptoGenerator.ecProofSigner(), // we can set or unset the dPopSigner. Both work
+        authorizeIssuanceConfig = AuthorizeIssuanceConfig.FAVOR_SCOPES, // Needs to explicitly set this to FAVOR_SCOPES
+        parUsage = ParUsage.Never, // Needs to explicitly set this to Never
         clock = Clock.systemDefaultZone(),
     )
 
