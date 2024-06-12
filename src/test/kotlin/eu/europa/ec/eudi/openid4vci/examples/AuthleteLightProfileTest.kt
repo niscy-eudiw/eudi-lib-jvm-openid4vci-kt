@@ -177,7 +177,7 @@ class AuthleteLightProfileTest {
     fun `Issue mso_mdoc credential using light profile`() = runBlocking {
         Authlete.testIssuanceWithAuthorizationCodeFlow(
             credCfgId = Authlete.LightProfileCredCfgId,
-            enableHttLogging = true,
+            enableHttLogging = false,
             claimSetToRequest = ::claimSetToRequest,
             popSignerPreference = ProofTypeMetaPreference.FavorCWT,
         )
