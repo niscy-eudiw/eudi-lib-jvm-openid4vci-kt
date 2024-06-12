@@ -45,6 +45,9 @@ dependencies {
     testImplementation(libs.ktor.client.logging)
     testImplementation(libs.logback.classic)
     testImplementation(libs.cbor)
+
+    testImplementation("org.seleniumhq.selenium:selenium-java:4.21.0")
+   // testImplementation("org.junit.jupiter:junit-jupiter-engine:5.10.2")
 }
 
 java {

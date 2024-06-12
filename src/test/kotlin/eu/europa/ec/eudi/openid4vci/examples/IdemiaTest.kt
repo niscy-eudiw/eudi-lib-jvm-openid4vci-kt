@@ -15,18 +15,96 @@
  */
 package eu.europa.ec.eudi.openid4vci.examples
 
-import eu.europa.ec.eudi.openid4vci.CredentialIssuerId
+import com.nimbusds.jose.jwk.Curve
+import eu.europa.ec.eudi.openid4vci.*
+import io.ktor.client.*
+import io.ktor.client.statement.*
+import io.ktor.http.*
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.DisplayName
+import org.openqa.selenium.By
+import org.openqa.selenium.WebElement
+import org.openqa.selenium.support.ui.ExpectedConditions
+import org.openqa.selenium.support.ui.WebDriverWait
+import java.net.URI
+import java.time.Clock
+import java.time.Duration
 import kotlin.test.Test
+
 
 private val IssuerId =
     CredentialIssuerId("https://interop-service.rac-shared.staging.identity-dev.idemia.io").getOrThrow()
 
 private object Idemia :
     HasIssuerId,
-    HasTestUser<NoUser> by HasTestUser.HasNoTestUser {
+    HasTestUser<NoUser> by HasTestUser.HasNoTestUser,
+    CanBeUsedWithVciLib,
+    CanAuthorizeIssuance<NoUser>,
+    CanRequestForCredentialOffer<NoUser> {
     override val issuerId = IssuerId
+    override val cfg: OpenId4VCIConfig =
+        OpenId4VCIConfig(
+            clientId = "eudiw", // We can use whatever we like
+            authFlowRedirectionURI = URI.create("https://oauthdebugger.com/debug"), //needs to be replaced with our wallet's redirect_uri
+            keyGenerationConfig = KeyGenerationConfig(Curve.P_256, 2048),
+            credentialResponseEncryptionPolicy = CredentialResponseEncryptionPolicy.SUPPORTED,
+            dPoPSigner = CryptoGenerator.ecProofSigner(),
+            authorizeIssuanceConfig = AuthorizeIssuanceConfig.FAVOR_SCOPES,
+            clock = Clock.systemDefaultZone(),
+        )
+
+    val mDL = CredentialConfigurationIdentifier("org.iso.18013.5.1.mDL")
+
+
+    override suspend fun requestCredentialOffer(httpClient: HttpClient, form: CredentialOfferForm<NoUser>): URI {
+
+        val uri = ResourceWrapper.chromeDriver().use { wrapper ->
+            val driver = wrapper.resource
+            driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(3));
+            driver.get("https://interop-service.rac-shared.staging.identity-dev.idemia.io/openid4vci.html")
+            val credentialOfferLink: WebElement = driver.findElement(By.linkText("Link"))
+            val uri = credentialOfferLink.getAttribute("href")
+            uri
+        }
+
+        return URI.create(uri)
+    }
+
+    override suspend fun loginUserAndGetAuthCode(
+        authorizationRequestPrepared: AuthorizationRequestPrepared,
+        user: NoUser,
+        enableHttpLogging: Boolean,
+    ): Pair<String, String> {
+        fun codeAndStateFromUrl(url: String): Pair<String, String> {
+            val r = URLBuilder(url).build()
+            return r.parameters["code"].toString() to r.parameters["state"].toString()
+        }
+        return coroutineScope {
+
+            val redirected = ResourceWrapper.chromeDriver().use { wrapper ->
+                val driver = wrapper.resource
+                val authorizeUrl = authorizationRequestPrepared.authorizationCodeURL.toString()
+                driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
+                driver.get(authorizeUrl)
+                WebDriverWait(driver, Duration.ofSeconds(3)).apply {
+                    until(ExpectedConditions.elementToBeClickable(By.id("btn-im")))
+                }
+                val button = driver.findElement(By.id("btn-im"))
+                button.click()
+                driver.currentUrl
+            }
+            codeAndStateFromUrl(redirected)
+        }
+    }
+
+
+    override suspend fun HttpClient.authorizeIssuance(loginResponse: HttpResponse, user: NoUser): HttpResponse {
+        return loginResponse
+    }
+
+
 }
 
 @DisplayName("Using Idemia Issuer, VCI Lib should be able to")
@@ -35,5 +113,10 @@ class IdemiaTest {
     @Test
     fun `Resolve issuer metadata`() = runTest {
         Idemia.testMetaDataResolution(enableHttLogging = false)
+    }
+
+    @Test
+    fun `Issue mDL credential using light profile`() = runBlocking {
+        Idemia.testIssuanceWithAuthorizationCodeFlow(Idemia.mDL, enableHttLogging = false)
     }
 }
