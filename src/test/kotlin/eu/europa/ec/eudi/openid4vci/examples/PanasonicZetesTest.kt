@@ -25,8 +25,10 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.openqa.selenium.By
 import java.net.URI
 import java.time.Clock
+import java.time.Duration
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
 
@@ -50,25 +52,47 @@ private object PanasonicZetes :
         credentialResponseEncryptionPolicy = CredentialResponseEncryptionPolicy.SUPPORTED,
         dPoPSigner = CryptoGenerator.ecProofSigner(),
         authorizeIssuanceConfig = AuthorizeIssuanceConfig.FAVOR_SCOPES,
-        parUsage = ParUsage.IfSupported,
+        parUsage = ParUsage.Never,
         clock = Clock.systemDefaultZone(),
     )
 
+    override suspend fun loginUserAndGetAuthCode(
+        authorizationRequestPrepared: AuthorizationRequestPrepared,
+        user: NoUser,
+        enableHttpLogging: Boolean
+    ): Pair<String, String> {
+        fun codeAndStateFromUrl(url: String): Pair<String, String> {
+            val r = URLBuilder(url).build()
+            return r.parameters["code"].toString() to r.parameters["state"].toString()
+        }
+        val url = authorizationRequestPrepared.authorizationCodeURL.toString()
+        val redirect =  ResourceWrapper.chromeDriver().use { wrapper->
+            val driver = wrapper.resource
+            driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
+            driver.get(url)
+            val authorizeButton = driver.findElement(By.id("authorize"))
+            authorizeButton.click()
+            driver.currentUrl
+        }
+        return codeAndStateFromUrl(redirect)
+    }
     override suspend fun HttpClient.authorizeIssuance(
         loginResponse: HttpResponse,
         user: NoUser,
     ): HttpResponse = loginResponse
 
     override suspend fun requestCredentialOffer(httpClient: HttpClient, form: CredentialOfferForm<NoUser>): URI {
-        val url = "https://mdlpilot.japaneast.cloudapp.azure.com:8017/credential-offer/10?profile=1"
-        httpClient.get(issuerId.value.value)
-        val response = httpClient.get(url){
-            headers{
-                append("Accept", "/")
-            }
-        }
-        require(response.status.isSuccess())
-        return URI.create(response.bodyAsText())
+       return ResourceWrapper.chromeDriver().use { wrapper->
+           val driver = wrapper.resource
+           driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
+           driver.get(issuerId.toString())
+           val showDocumentButton = driver.findElement(By.xpath("/html/body/div[1]/div/div[2]/table/tbody/tr/td[4]/button"))
+           showDocumentButton.click()
+           val showProfileLightButton = driver.findElement(By.xpath("/html/body/div[2]/div[2]/div/button"))
+           showProfileLightButton.click()
+           val link = driver.findElement(By.xpath("/html/body/div[2]/a"))
+           URI.create(link.getAttribute("href"))
+       }
 
     }
 }
@@ -84,7 +108,7 @@ class PanasonicZetesTest {
     }
 
     @Test
-    fun `Issue mso_mdoc credential using light profile`() = runTest {
+    fun `Issue mso_mdoc credential using light profile`() = runBlocking {
         PanasonicZetes.testIssuanceWithAuthorizationCodeFlow(PanasonicZetes.LightProfileCfgId, enableHttLogging = true)
     }
 }
