@@ -50,7 +50,7 @@ private object Bdr :
 
     override val cfg: OpenId4VCIConfig = OpenId4VCIConfig(
         clientId = "eudiw", // We can use whatever we like
-        authFlowRedirectionURI = URI.create("https://oauthdebugger.com/debug"), //needs to be replaced with our wallet's redirect_uri
+        authFlowRedirectionURI = URI.create("https://oauthdebugger.com/debug"), // needs to be replaced with our wallet's redirect_uri
         keyGenerationConfig = KeyGenerationConfig(Curve.P_256, 2048),
         credentialResponseEncryptionPolicy = CredentialResponseEncryptionPolicy.SUPPORTED,
         dPoPSigner = CryptoGenerator.ecProofSigner(), // we can set or unset the dPopSigner. Both work

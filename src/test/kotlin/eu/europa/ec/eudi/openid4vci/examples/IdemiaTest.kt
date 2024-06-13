@@ -33,7 +33,6 @@ import java.time.Clock
 import java.time.Duration
 import kotlin.test.Test
 
-
 private val IssuerId =
     CredentialIssuerId("https://interop-service.rac-shared.staging.identity-dev.idemia.io").getOrThrow()
 
@@ -47,7 +46,7 @@ private object Idemia :
     override val cfg: OpenId4VCIConfig =
         OpenId4VCIConfig(
             clientId = "eudiw", // We can use whatever we like
-            authFlowRedirectionURI = URI.create("https://oauthdebugger.com/debug"), //needs to be replaced with our wallet's redirect_uri
+            authFlowRedirectionURI = URI.create("https://oauthdebugger.com/debug"), // needs to be replaced with our wallet's redirect_uri
             keyGenerationConfig = KeyGenerationConfig(Curve.P_256, 2048),
             credentialResponseEncryptionPolicy = CredentialResponseEncryptionPolicy.SUPPORTED,
             dPoPSigner = CryptoGenerator.ecProofSigner(),
@@ -57,9 +56,7 @@ private object Idemia :
 
     val mDL = CredentialConfigurationIdentifier("org.iso.18013.5.1.mDL")
 
-
     override suspend fun requestCredentialOffer(httpClient: HttpClient, form: CredentialOfferForm<NoUser>): URI {
-
         val uri = ResourceWrapper.chromeDriver().use { wrapper ->
             val driver = wrapper.resource
             driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(3))
@@ -85,9 +82,7 @@ private object Idemia :
             return code to state
         }
         return coroutineScope {
-
             val redirected = async {
-
                 ResourceWrapper.chromeDriver().use { wrapper ->
                     val threeSeconds = Duration.ofSeconds(3)
                     val driver = wrapper.resource
@@ -110,12 +105,9 @@ private object Idemia :
         }
     }
 
-
     override suspend fun HttpClient.authorizeIssuance(loginResponse: HttpResponse, user: NoUser): HttpResponse {
         return loginResponse
     }
-
-
 }
 
 @DisplayName("Using Idemia Issuer, VCI Lib should be able to")
