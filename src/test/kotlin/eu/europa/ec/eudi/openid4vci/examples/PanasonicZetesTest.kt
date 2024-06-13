@@ -100,7 +100,7 @@ class PanasonicZetesTest {
 
     @Test
     fun `Resolve issuer's metadata`() = runBlocking {
-        val (issuerMeta, authServersMeta) = PanasonicZetes.testMetaDataResolution(true)
+        val (issuerMeta, authServersMeta) = PanasonicZetes.testMetaDataResolution(false)
         assertEquals(1, authServersMeta.size)
         assertContains(issuerMeta.credentialConfigurationsSupported.keys, PanasonicZetes.LightProfileCfgId)
     }

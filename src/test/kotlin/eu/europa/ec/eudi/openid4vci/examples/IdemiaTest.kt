@@ -26,12 +26,15 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.assertDoesNotThrow
 import org.openqa.selenium.By
 import org.openqa.selenium.WebElement
 import java.net.URI
 import java.time.Clock
 import java.time.Duration
 import kotlin.test.Test
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 private val IssuerId =
     CredentialIssuerId("https://interop-service.rac-shared.staging.identity-dev.idemia.io").getOrThrow()
@@ -55,6 +58,7 @@ private object Idemia :
         )
 
     val mDL = CredentialConfigurationIdentifier("org.iso.18013.5.1.mDL")
+    val pid = CredentialConfigurationIdentifier("eu.europa.ec.eudi.pid.1")
 
     override suspend fun requestCredentialOffer(httpClient: HttpClient, form: CredentialOfferForm<NoUser>): URI {
         val uri = ResourceWrapper.chromeDriver().use { wrapper ->
@@ -120,6 +124,63 @@ class IdemiaTest {
 
     @Test
     fun `Issue mDL credential using light profile`() = runBlocking {
-        Idemia.testIssuanceWithAuthorizationCodeFlow(Idemia.mDL, enableHttLogging = true)
+        Idemia.testIssuanceWithAuthorizationCodeFlow(Idemia.mDL, enableHttLogging = false)
+    }
+
+    @Test
+    fun `Issue pid credential using authorization code flow`() = runBlocking {
+        Idemia.testIssuanceWithAuthorizationCodeFlow(Idemia.pid, enableHttLogging = false)
+    }
+
+    @Test
+    fun `Issue multiple credentials in batch using authorization code grant`() = runBlocking {
+        val credCfgIds = listOf(
+            Idemia.mDL,
+            Idemia.mDL,
+        )
+        val credentialOfferUri = Idemia.requestAuthorizationCodeGrantOffer(credCfgIds)
+        val issuer = assertDoesNotThrow {
+            Idemia.createIssuer(credentialOfferUri.toString(), enableHttLogging = true)
+        }
+        assertTrue { credCfgIds.all { it in issuer.credentialOffer.credentialConfigurationIdentifiers } }
+        val outcome = with(issuer) {
+            val authorizedRequest = authorizeUsingAuthorizationCodeFlow(Idemia, enableHttLogging = false)
+            submitBatchCredentialRequest(authorizedRequest, credCfgIds)
+        }
+        ensureIssued(outcome)
+        Unit
     }
 }
+
+private suspend fun Issuer.submitBatchCredentialRequest(
+    authorizedRequest: AuthorizedRequest,
+    credentialConfigurationIds: List<CredentialConfigurationIdentifier>,
+): SubmittedRequest {
+    val reqs :List<Pair<IssuanceRequestPayload, PopSigner?>> = buildList{
+        for (credentialConfigurationId in credentialConfigurationIds) {
+            //
+            // This is a hack
+            //
+            val cfg = credentialOffer.credentialIssuerMetadata.credentialConfigurationsSupported[credentialConfigurationId]
+            assertNotNull(cfg)
+            val requestPayload = IssuanceRequestPayload.ConfigurationBased(credentialConfigurationId, null)
+            val popSigner = when (authorizedRequest) {
+                is AuthorizedRequest.ProofRequired -> popSigner(credentialConfigurationId, ProofTypeMetaPreference.FavorJWT)
+                is AuthorizedRequest.NoProofRequired -> null
+            }
+            add(requestPayload to popSigner)
+        }
+    }
+
+    return when (authorizedRequest) {
+        is AuthorizedRequest.ProofRequired -> with(authorizedRequest) {
+            require(reqs.all { (_,v)->v != null })
+            requestBatch(reqs as List<Pair<IssuanceRequestPayload, PopSigner>>)
+        }
+
+        is AuthorizedRequest.NoProofRequired -> with(authorizedRequest) {
+            requestBatch(reqs.map { (ir,_)->ir }.toList())
+        }
+    }.getOrThrow()
+}
+
