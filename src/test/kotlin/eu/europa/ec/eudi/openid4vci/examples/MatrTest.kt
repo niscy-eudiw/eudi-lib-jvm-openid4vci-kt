@@ -43,8 +43,8 @@ private object Matr :
     //  Test fail due to tha absence of a known client_id
 
     override val cfg = OpenId4VCIConfig(
-        clientId = "eudiw",
-        authFlowRedirectionURI = URI.create("https://nextdev-api.authlete.net/api/mock/redirection"),
+        clientId = "eudiw", // We need to get it from MATR
+        authFlowRedirectionURI = URI.create("https://oauthdebugger.com/debug"), //needs to be replaced with our wallet's redirect_uri
         keyGenerationConfig = KeyGenerationConfig(Curve.P_256, 2048),
         credentialResponseEncryptionPolicy = CredentialResponseEncryptionPolicy.SUPPORTED,
         dPoPSigner = CryptoGenerator.ecProofSigner(),
@@ -68,7 +68,7 @@ class MatrTest {
         assertContains(issuerMeta.credentialConfigurationsSupported.keys, Matr.LightProfileCredCfgId)
     }
 
-    @Test
+    @Test @Ignore
     fun `Issue mso_mdoc credential using light profile`() = runBlocking {
         Matr.testIssuanceWithAuthorizationCodeFlow(Matr.LightProfileCredCfgId, enableHttLogging = true)
     }
