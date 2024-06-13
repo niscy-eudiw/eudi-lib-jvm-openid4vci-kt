@@ -237,7 +237,7 @@ suspend fun <ENV, USER> ENV.testIssuanceWithAuthorizationCodeFlow(
       ENV : CanAuthorizeIssuance<USER>,
       ENV : CanBeUsedWithVciLib,
       ENV : CanRequestForCredentialOffer<USER> {
-    val credentialOfferUri = requestAuthorizationCodeGrantOffer(credCfgIds = setOf(credCfgId))
+    val credentialOfferUri = requestAuthorizationCodeGrantOffer(credCfgIds = listOf(credCfgId))
     val issuer = assertDoesNotThrow {
         createIssuer(credentialOfferUri.toString(), enableHttpLogging)
     }
@@ -282,7 +282,7 @@ suspend fun <ENV, USER> ENV.testIssuanceWithPreAuthorizedCodeFlow(
  * the method places a request for a [CredentialOffer] that uses the authorization code grant
  */
 suspend fun <ENV, USER> ENV.requestAuthorizationCodeGrantOffer(
-    credCfgIds: Set<CredentialConfigurationIdentifier>,
+    credCfgIds: List<CredentialConfigurationIdentifier>,
     issuerStateIncluded: Boolean = true,
     credentialOfferEndpoint: String? = null,
 ): URI
@@ -291,7 +291,7 @@ suspend fun <ENV, USER> ENV.requestAuthorizationCodeGrantOffer(
           ENV : CanRequestForCredentialOffer<USER> {
     val form = CredentialOfferForm.authorizationCodeGrant(
         user = testUser,
-        credCfgIds,
+        credCfgIds.toSet(),
         issuerStateIncluded,
         credentialOfferEndpoint,
     )
