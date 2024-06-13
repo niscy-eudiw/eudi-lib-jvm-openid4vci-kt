@@ -224,7 +224,7 @@ class AuthleteLightProfileTest {
 
     @Test
     fun `Issue multiple credentials in batch using authorization code grant`() = runBlocking {
-        val credCfgIds = setOf(
+        val credCfgIds = listOf(
             Authlete.IdentityCredentialCredCfgId,
             Authlete.MdlCredCfgId,
         )
@@ -244,7 +244,7 @@ class AuthleteLightProfileTest {
 
 private suspend fun Issuer.submitBatchCredentialRequest(
     authorizedRequest: AuthorizedRequest,
-    credentialConfigurationIds: Set<CredentialConfigurationIdentifier>,
+    credentialConfigurationIds: List<CredentialConfigurationIdentifier>,
 ): SubmittedRequest {
     val reqs = buildMap<IssuanceRequestPayload, PopSigner?> {
         for (credentialConfigurationId in credentialConfigurationIds) {
