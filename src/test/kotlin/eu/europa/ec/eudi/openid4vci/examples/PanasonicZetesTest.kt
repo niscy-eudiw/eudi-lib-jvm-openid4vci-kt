@@ -22,7 +22,6 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.openqa.selenium.By
@@ -59,16 +58,16 @@ private object PanasonicZetes :
     override suspend fun loginUserAndGetAuthCode(
         authorizationRequestPrepared: AuthorizationRequestPrepared,
         user: NoUser,
-        enableHttpLogging: Boolean
+        enableHttpLogging: Boolean,
     ): Pair<String, String> {
         fun codeAndStateFromUrl(url: String): Pair<String, String> {
             val r = URLBuilder(url).build()
             return r.parameters["code"].toString() to r.parameters["state"].toString()
         }
         val url = authorizationRequestPrepared.authorizationCodeURL.toString()
-        val redirect =  ResourceWrapper.chromeDriver().use { wrapper->
+        val redirect = ResourceWrapper.chromeDriver().use { wrapper ->
             val driver = wrapper.resource
-            driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
+            driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5))
             driver.get(url)
             val authorizeButton = driver.findElement(By.id("authorize"))
             authorizeButton.click()
@@ -82,18 +81,17 @@ private object PanasonicZetes :
     ): HttpResponse = loginResponse
 
     override suspend fun requestCredentialOffer(httpClient: HttpClient, form: CredentialOfferForm<NoUser>): URI {
-       return ResourceWrapper.chromeDriver().use { wrapper->
-           val driver = wrapper.resource
-           driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
-           driver.get(issuerId.toString())
-           val showDocumentButton = driver.findElement(By.xpath("/html/body/div[1]/div/div[2]/table/tbody/tr/td[4]/button"))
-           showDocumentButton.click()
-           val showProfileLightButton = driver.findElement(By.xpath("/html/body/div[2]/div[2]/div/button"))
-           showProfileLightButton.click()
-           val link = driver.findElement(By.xpath("/html/body/div[2]/a"))
-           URI.create(link.getAttribute("href"))
-       }
-
+        return ResourceWrapper.chromeDriver().use { wrapper ->
+            val driver = wrapper.resource
+            driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5))
+            driver.get(issuerId.toString())
+            val showDocumentButton = driver.findElement(By.xpath("/html/body/div[1]/div/div[2]/table/tbody/tr/td[4]/button"))
+            showDocumentButton.click()
+            val showProfileLightButton = driver.findElement(By.xpath("/html/body/div[2]/div[2]/div/button"))
+            showProfileLightButton.click()
+            val link = driver.findElement(By.xpath("/html/body/div[2]/a"))
+            URI.create(link.getAttribute("href"))
+        }
     }
 }
 

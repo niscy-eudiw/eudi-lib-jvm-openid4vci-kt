@@ -44,7 +44,7 @@ private object Matr :
 
     override val cfg = OpenId4VCIConfig(
         clientId = "eudiw", // We need to get it from MATR
-        authFlowRedirectionURI = URI.create("https://oauthdebugger.com/debug"), //needs to be replaced with our wallet's redirect_uri
+        authFlowRedirectionURI = URI.create("https://oauthdebugger.com/debug"), // needs to be replaced with our wallet's redirect_uri
         keyGenerationConfig = KeyGenerationConfig(Curve.P_256, 2048),
         credentialResponseEncryptionPolicy = CredentialResponseEncryptionPolicy.SUPPORTED,
         dPoPSigner = CryptoGenerator.ecProofSigner(),
