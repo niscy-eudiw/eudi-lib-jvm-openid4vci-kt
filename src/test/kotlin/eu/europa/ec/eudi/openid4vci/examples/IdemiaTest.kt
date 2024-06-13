@@ -20,14 +20,14 @@ import eu.europa.ec.eudi.openid4vci.*
 import io.ktor.client.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
+import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.DisplayName
 import org.openqa.selenium.By
 import org.openqa.selenium.WebElement
-import org.openqa.selenium.support.ui.ExpectedConditions
-import org.openqa.selenium.support.ui.WebDriverWait
 import java.net.URI
 import java.time.Clock
 import java.time.Duration
@@ -62,7 +62,7 @@ private object Idemia :
 
         val uri = ResourceWrapper.chromeDriver().use { wrapper ->
             val driver = wrapper.resource
-            driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(3));
+            driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(3))
             driver.get("https://interop-service.rac-shared.staging.identity-dev.idemia.io/openid4vci.html")
             val credentialOfferLink: WebElement = driver.findElement(By.linkText("Link"))
             val uri = credentialOfferLink.getAttribute("href")
@@ -78,24 +78,35 @@ private object Idemia :
         enableHttpLogging: Boolean,
     ): Pair<String, String> {
         fun codeAndStateFromUrl(url: String): Pair<String, String> {
+            require(url.startsWith(cfg.authFlowRedirectionURI.toString())) { "Invalid redirect_uri $url" }
             val r = URLBuilder(url).build()
-            return r.parameters["code"].toString() to r.parameters["state"].toString()
+            val code = checkNotNull(r.parameters["code"]) { "Missing code" }
+            val state = checkNotNull(r.parameters["state"]) { "Missing state" }
+            return code to state
         }
         return coroutineScope {
 
-            val redirected = ResourceWrapper.chromeDriver().use { wrapper ->
-                val driver = wrapper.resource
-                val authorizeUrl = authorizationRequestPrepared.authorizationCodeURL.toString()
-                driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
-                driver.get(authorizeUrl)
-                WebDriverWait(driver, Duration.ofSeconds(3)).apply {
-                    until(ExpectedConditions.elementToBeClickable(By.id("btn-im")))
+            val redirected = async {
+
+                ResourceWrapper.chromeDriver().use { wrapper ->
+                    val threeSeconds = Duration.ofSeconds(3)
+                    val driver = wrapper.resource
+                    val authorizeUrl = authorizationRequestPrepared.authorizationCodeURL.toString()
+
+                    driver.manage().timeouts().implicitlyWait(threeSeconds)
+                    driver.manage().timeouts().scriptTimeout(threeSeconds)
+                    driver.manage().timeouts().pageLoadTimeout(threeSeconds)
+
+                    driver.get(authorizeUrl)
+                    val button = driver.findElement(By.id("btn-im"))
+                    delay(threeSeconds.toMillis())
+                    button.click()
+                    delay(threeSeconds.toMillis())
+
+                    driver.currentUrl
                 }
-                val button = driver.findElement(By.id("btn-im"))
-                button.click()
-                driver.currentUrl
             }
-            codeAndStateFromUrl(redirected)
+            codeAndStateFromUrl(redirected.await())
         }
     }
 
@@ -117,6 +128,6 @@ class IdemiaTest {
 
     @Test
     fun `Issue mDL credential using light profile`() = runBlocking {
-        Idemia.testIssuanceWithAuthorizationCodeFlow(Idemia.mDL, enableHttLogging = false)
+        Idemia.testIssuanceWithAuthorizationCodeFlow(Idemia.mDL, enableHttLogging = true)
     }
 }
