@@ -268,4 +268,3 @@ private suspend fun Issuer.submitBatchCredentialRequest(
         }
     }.getOrThrow()
 }
-
