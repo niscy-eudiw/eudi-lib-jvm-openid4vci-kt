@@ -44,9 +44,6 @@ private object Matr :
 
     override val issuerId = IssuerId
 
-    // TODO MATR requires specific client_id
-    //  Test fail due to tha absence of a known client_id
-
     override val cfg = OpenId4VCIConfig(
         clientId = "", // We need to get it from MATR
         authFlowRedirectionURI = URI.create("https://oauthdebugger.com/debug"), // needs to be replaced with our wallet's redirect_uri
@@ -112,37 +109,37 @@ class MatrTest {
     }
 
     @Test
-    fun `Issue mDL credential using light profile using CWT proof`() = runBlocking {
+    fun `Issue mDL credential using light profile with CWT proof`() = runBlocking {
         Matr.testIssuanceWithAuthorizationCodeFlow(
             Matr.LightProfileCredCfgId,
-            enableHttLogging = true,
+            enableHttLogging = false,
             popSignerPreference = ProofTypeMetaPreference.FavorCWT,
         )
     }
 
     @Test
-    fun `Issue mDL credential using light profile using JWT proof`() = runBlocking {
+    fun `Issue mDL credential using light profile with JWT proof`() = runBlocking {
         Matr.testIssuanceWithAuthorizationCodeFlow(
             Matr.LightProfileCredCfgId,
-            enableHttLogging = true,
+            enableHttLogging = false,
             popSignerPreference = ProofTypeMetaPreference.FavorJWT,
         )
     }
 
     @Test
-    fun `Issue pid in mso_mdoc credential using CWT proof`() = runBlocking {
+    fun `Issue pid in mso_mdoc using auth code flow with CWT proof`() = runBlocking {
         Matr.testIssuanceWithAuthorizationCodeFlow(
             Matr.pid,
-            enableHttLogging = true,
+            enableHttLogging = false,
             popSignerPreference = ProofTypeMetaPreference.FavorCWT,
         )
     }
 
     @Test
-    fun `Issue pid in mso_mdoc credential using JWT proof`() = runBlocking {
+    fun `Issue pid in mso_mdoc using auth code flow with JWT proof`() = runBlocking {
         Matr.testIssuanceWithAuthorizationCodeFlow(
             Matr.pid,
-            enableHttLogging = true,
+            enableHttLogging = false,
             popSignerPreference = ProofTypeMetaPreference.FavorJWT,
         )
     }
