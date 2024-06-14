@@ -156,11 +156,8 @@ private suspend fun Issuer.submitBatchCredentialRequest(
     authorizedRequest: AuthorizedRequest,
     credentialConfigurationIds: List<CredentialConfigurationIdentifier>,
 ): SubmittedRequest {
-    val reqs :List<Pair<IssuanceRequestPayload, PopSigner?>> = buildList{
+    val reqs: List<Pair<IssuanceRequestPayload, PopSigner?>> = buildList {
         for (credentialConfigurationId in credentialConfigurationIds) {
-            //
-            // This is a hack
-            //
             val cfg = credentialOffer.credentialIssuerMetadata.credentialConfigurationsSupported[credentialConfigurationId]
             assertNotNull(cfg)
             val requestPayload = IssuanceRequestPayload.ConfigurationBased(credentialConfigurationId, null)
@@ -174,13 +171,12 @@ private suspend fun Issuer.submitBatchCredentialRequest(
 
     return when (authorizedRequest) {
         is AuthorizedRequest.ProofRequired -> with(authorizedRequest) {
-            require(reqs.all { (_,v)->v != null })
+            require(reqs.all { (_, v) -> v != null })
             requestBatch(reqs as List<Pair<IssuanceRequestPayload, PopSigner>>)
         }
 
         is AuthorizedRequest.NoProofRequired -> with(authorizedRequest) {
-            requestBatch(reqs.map { (ir,_)->ir }.toList())
+            requestBatch(reqs.map { (ir, _) -> ir }.toList())
         }
     }.getOrThrow()
 }
-
