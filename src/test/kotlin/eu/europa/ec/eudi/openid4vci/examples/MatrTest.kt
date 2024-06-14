@@ -19,12 +19,17 @@ import com.nimbusds.jose.jwk.Curve
 import eu.europa.ec.eudi.openid4vci.*
 import io.ktor.client.*
 import io.ktor.client.statement.*
+import io.ktor.http.*
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.DisplayName
+import org.openqa.selenium.By
 import java.net.URI
 import java.time.Clock
-import kotlin.test.Ignore
+import java.time.Duration
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
@@ -43,18 +48,56 @@ private object Matr :
     //  Test fail due to tha absence of a known client_id
 
     override val cfg = OpenId4VCIConfig(
-        clientId = "eudiw", // We need to get it from MATR
+        clientId = "", // We need to get it from MATR
         authFlowRedirectionURI = URI.create("https://oauthdebugger.com/debug"), // needs to be replaced with our wallet's redirect_uri
         keyGenerationConfig = KeyGenerationConfig(Curve.P_256, 2048),
         credentialResponseEncryptionPolicy = CredentialResponseEncryptionPolicy.SUPPORTED,
         dPoPSigner = CryptoGenerator.ecProofSigner(),
         authorizeIssuanceConfig = AuthorizeIssuanceConfig.FAVOR_SCOPES,
+        parUsage = ParUsage.Never,
         clock = Clock.systemDefaultZone(),
     )
     val LightProfileCredCfgId = CredentialConfigurationIdentifier("b59d6a4c-b331-476b-9a4e-ea234c7882c8")
+    val pid = CredentialConfigurationIdentifier("6536bd24-9eae-4f31-aa8b-1386ae547b46")
+    override suspend fun loginUserAndGetAuthCode(
+        authorizationRequestPrepared: AuthorizationRequestPrepared,
+        user: NoUser,
+        enableHttpLogging: Boolean,
+    ): Pair<String, String> {
+        fun codeAndStateFromUrl(url: String): Pair<String, String> {
+            require(url.startsWith(cfg.authFlowRedirectionURI.toString())) { "Invalid redirect_uri $url" }
+            val r = URLBuilder(url).build()
+            val code = checkNotNull(r.parameters["code"]) { "Missing code" }
+            val state = checkNotNull(r.parameters["state"]) { "Missing state" }
+            return code to state
+        }
+        return coroutineScope {
+            val redirected = async {
+                ResourceWrapper.chromeDriver().use { wrapper ->
+                    val threeSeconds = Duration.ofSeconds(3)
+                    val driver = wrapper.resource
+                    val authorizeUrl = authorizationRequestPrepared.authorizationCodeURL.toString()
+
+                    driver.manage().timeouts().implicitlyWait(threeSeconds)
+                    driver.manage().timeouts().scriptTimeout(threeSeconds)
+                    driver.manage().timeouts().pageLoadTimeout(threeSeconds)
+
+                    driver.get(authorizeUrl)
+                    delay(threeSeconds.toMillis())
+                    val button = driver.findElement(By.xpath("  /html/body/main/div/div/div/form/div/button"))
+                    // delay(threeSeconds.toMillis())
+                    button.click()
+                    delay(threeSeconds.toMillis())
+
+                    driver.currentUrl
+                }
+            }
+            codeAndStateFromUrl(redirected.await())
+        }
+    }
 
     override suspend fun HttpClient.authorizeIssuance(loginResponse: HttpResponse, user: NoUser): HttpResponse {
-        TODO("Not yet implemented")
+        return loginResponse
     }
 }
 
@@ -68,8 +111,39 @@ class MatrTest {
         assertContains(issuerMeta.credentialConfigurationsSupported.keys, Matr.LightProfileCredCfgId)
     }
 
-    @Test @Ignore
-    fun `Issue mso_mdoc credential using light profile`() = runBlocking {
-        Matr.testIssuanceWithAuthorizationCodeFlow(Matr.LightProfileCredCfgId, enableHttLogging = true)
+    @Test
+    fun `Issue mDL credential using light profile using CWT proof`() = runBlocking {
+        Matr.testIssuanceWithAuthorizationCodeFlow(
+            Matr.LightProfileCredCfgId,
+            enableHttLogging = true,
+            popSignerPreference = ProofTypeMetaPreference.FavorCWT,
+        )
+    }
+
+    @Test
+    fun `Issue mDL credential using light profile using JWT proof`() = runBlocking {
+        Matr.testIssuanceWithAuthorizationCodeFlow(
+            Matr.LightProfileCredCfgId,
+            enableHttLogging = true,
+            popSignerPreference = ProofTypeMetaPreference.FavorJWT,
+        )
+    }
+
+    @Test
+    fun `Issue pid in mso_mdoc credential using CWT proof`() = runBlocking {
+        Matr.testIssuanceWithAuthorizationCodeFlow(
+            Matr.pid,
+            enableHttLogging = true,
+            popSignerPreference = ProofTypeMetaPreference.FavorCWT,
+        )
+    }
+
+    @Test
+    fun `Issue pid in mso_mdoc credential using JWT proof`() = runBlocking {
+        Matr.testIssuanceWithAuthorizationCodeFlow(
+            Matr.pid,
+            enableHttLogging = true,
+            popSignerPreference = ProofTypeMetaPreference.FavorJWT,
+        )
     }
 }
