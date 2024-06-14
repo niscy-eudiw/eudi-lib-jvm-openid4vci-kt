@@ -178,7 +178,6 @@ class AuthleteLightProfileTest {
         Authlete.testIssuanceWithAuthorizationCodeFlow(
             credCfgId = Authlete.LightProfileCredCfgId,
             enableHttLogging = false,
-            claimSetToRequest = ::claimSetToRequest,
             popSignerPreference = ProofTypeMetaPreference.FavorCWT,
         )
     }
@@ -188,7 +187,6 @@ class AuthleteLightProfileTest {
         Authlete.testIssuanceWithAuthorizationCodeFlow(
             credCfgId = Authlete.IdentityCredentialCredCfgId,
             enableHttLogging = false,
-            claimSetToRequest = ::claimSetToRequest,
         )
     }
 
@@ -199,7 +197,6 @@ class AuthleteLightProfileTest {
             credCfgId = Authlete.IdentityCredentialCredCfgId,
             credentialOfferEndpoint = null,
             enableHttLogging = false,
-            claimSetToRequest = ::claimSetToRequest,
         )
     }
 
@@ -208,7 +205,6 @@ class AuthleteLightProfileTest {
         Authlete.testIssuanceWithAuthorizationCodeFlow(
             credCfgId = Authlete.MdlCredCfgId,
             enableHttLogging = false,
-            claimSetToRequest = ::claimSetToRequest,
         )
     }
 
@@ -218,7 +214,6 @@ class AuthleteLightProfileTest {
             txCode = "123",
             credCfgId = Authlete.MdlCredCfgId,
             credentialOfferEndpoint = null,
-            claimSetToRequest = ::claimSetToRequest,
         )
     }
 
@@ -253,8 +248,8 @@ private suspend fun Issuer.submitBatchCredentialRequest(
             //
             val cfg = credentialOffer.credentialIssuerMetadata.credentialConfigurationsSupported[credentialConfigurationId]
             assertNotNull(cfg)
-            val claimSetToRequest = claimSetToRequest(cfg)
-            val requestPayload = IssuanceRequestPayload.ConfigurationBased(credentialConfigurationId, claimSetToRequest)
+
+            val requestPayload = IssuanceRequestPayload.ConfigurationBased(credentialConfigurationId, null)
             val popSigner = when (authorizedRequest) {
                 is AuthorizedRequest.ProofRequired -> popSigner(credentialConfigurationId, ProofTypeMetaPreference.FavorJWT)
                 is AuthorizedRequest.NoProofRequired -> null
@@ -274,17 +269,3 @@ private suspend fun Issuer.submitBatchCredentialRequest(
     }.getOrThrow()
 }
 
-/**
- * This is specific behavior to the Authlete's issuer, when issuing mso_mdoc credential,
- * Normally, claimSet is optional
- * If not set, Authlete's Issuer sends back a 400-response reporting that
- * the user has no permission.
- */
-private fun claimSetToRequest(
-    credCfg: CredentialConfiguration,
-): ClaimSet? {
-    return when (credCfg) {
-        is MsoMdocCredential -> credCfg.claims.toClaimSet()
-        else -> null
-    }
-}
