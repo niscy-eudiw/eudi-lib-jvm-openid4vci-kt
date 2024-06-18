@@ -23,7 +23,7 @@ import kotlin.test.Test
 @DisplayName("PID DEV Issuer Test")
 class PidDevIssuerTest {
 
-    @Test @Ignore
+    @Test
     fun `Issue PID in mso_mdoc using authorize code flow and JWT proofs`() = runTest {
         PidDevIssuer.testIssuanceWithAuthorizationCodeFlow(
             PidDevIssuer.PID_MsoMdoc_config_id,
@@ -32,7 +32,7 @@ class PidDevIssuerTest {
         )
     }
 
-    @Test @Ignore
+    @Test
     fun `Issue PID in mso_mdoc using authorize code flow and CWT proofs`() = runTest {
         PidDevIssuer.testIssuanceWithAuthorizationCodeFlow(
             PidDevIssuer.PID_MsoMdoc_config_id,
@@ -41,7 +41,7 @@ class PidDevIssuerTest {
         )
     }
 
-    @Test @Ignore
+    @Test
     fun `Issue PID in sd-jwt-vc using authorize code flow and JWT proofs`() = runTest {
         PidDevIssuer.testIssuanceWithAuthorizationCodeFlow(
             PidDevIssuer.PID_SdJwtVC_config_id,
@@ -50,7 +50,7 @@ class PidDevIssuerTest {
         )
     }
 
-    @Test @Ignore
+    @Test
     fun `Issue mDL in mso_mdoc using authorize code flow and JWT proofs`() = runTest {
         PidDevIssuer.testIssuanceWithAuthorizationCodeFlow(
             PidDevIssuer.MDL_config_id,
@@ -59,7 +59,7 @@ class PidDevIssuerTest {
         )
     }
 
-    @Test @Ignore
+    @Test
     fun `Issue mDL in mso_mdoc using authorize code flow and CWT proofs`() = runTest {
         PidDevIssuer.testIssuanceWithAuthorizationCodeFlow(
             PidDevIssuer.MDL_config_id,
