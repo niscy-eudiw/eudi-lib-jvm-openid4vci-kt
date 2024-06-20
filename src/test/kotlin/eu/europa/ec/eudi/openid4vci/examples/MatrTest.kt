@@ -103,7 +103,7 @@ class MatrTest {
 
     @Test
     fun `Resolve issuer's metadata`() = runTest {
-        val (issuerMeta, authServersMeta) = Matr.testMetaDataResolution(enableHttLogging = true)
+        val (issuerMeta, authServersMeta) = Matr.testMetaDataResolution(enableHttpLogging = true)
         assertEquals(1, authServersMeta.size)
         assertContains(issuerMeta.credentialConfigurationsSupported.keys, Matr.LightProfileCredCfgId)
     }
@@ -112,7 +112,7 @@ class MatrTest {
     fun `Issue mDL credential using light profile with CWT proof`() = runBlocking {
         Matr.testIssuanceWithAuthorizationCodeFlow(
             Matr.LightProfileCredCfgId,
-            enableHttLogging = false,
+            enableHttpLogging = false,
             popSignerPreference = ProofTypeMetaPreference.FavorCWT,
         )
     }
@@ -121,7 +121,7 @@ class MatrTest {
     fun `Issue mDL credential using light profile with JWT proof`() = runBlocking {
         Matr.testIssuanceWithAuthorizationCodeFlow(
             Matr.LightProfileCredCfgId,
-            enableHttLogging = false,
+            enableHttpLogging = false,
             popSignerPreference = ProofTypeMetaPreference.FavorJWT,
         )
     }
@@ -130,7 +130,7 @@ class MatrTest {
     fun `Issue pid in mso_mdoc using auth code flow with CWT proof`() = runBlocking {
         Matr.testIssuanceWithAuthorizationCodeFlow(
             Matr.pid,
-            enableHttLogging = false,
+            enableHttpLogging = false,
             popSignerPreference = ProofTypeMetaPreference.FavorCWT,
         )
     }
@@ -139,7 +139,7 @@ class MatrTest {
     fun `Issue pid in mso_mdoc using auth code flow with JWT proof`() = runBlocking {
         Matr.testIssuanceWithAuthorizationCodeFlow(
             Matr.pid,
-            enableHttLogging = false,
+            enableHttpLogging = false,
             popSignerPreference = ProofTypeMetaPreference.FavorJWT,
         )
     }

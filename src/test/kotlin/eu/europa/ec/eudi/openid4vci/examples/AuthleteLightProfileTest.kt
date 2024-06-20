@@ -141,7 +141,7 @@ class AuthleteLightProfileTest {
 
     @Test
     fun `Resolve issuer's metadata`() = runTest {
-        Authlete.testMetaDataResolution(enableHttLogging = false)
+        Authlete.testMetaDataResolution(enableHttpLogging = false)
     }
 
     @Test
@@ -177,7 +177,7 @@ class AuthleteLightProfileTest {
     fun `Issue mso_mdoc credential using light profile`() = runBlocking {
         Authlete.testIssuanceWithAuthorizationCodeFlow(
             credCfgId = Authlete.LightProfileCredCfgId,
-            enableHttLogging = false,
+            enableHttpLogging = false,
             popSignerPreference = ProofTypeMetaPreference.FavorCWT,
         )
     }
@@ -186,7 +186,7 @@ class AuthleteLightProfileTest {
     fun `Issue credential in sd-jwt-vc using authorization code grant`() = runTest {
         Authlete.testIssuanceWithAuthorizationCodeFlow(
             credCfgId = Authlete.IdentityCredentialCredCfgId,
-            enableHttLogging = false,
+            enableHttpLogging = false,
         )
     }
 
@@ -196,7 +196,7 @@ class AuthleteLightProfileTest {
             txCode = "HelloWorld",
             credCfgId = Authlete.IdentityCredentialCredCfgId,
             credentialOfferEndpoint = null,
-            enableHttLogging = false,
+            enableHttpLogging = false,
         )
     }
 
@@ -204,7 +204,7 @@ class AuthleteLightProfileTest {
     fun `Issue mDL using authorization code grant`() = runBlocking {
         Authlete.testIssuanceWithAuthorizationCodeFlow(
             credCfgId = Authlete.MdlCredCfgId,
-            enableHttLogging = false,
+            enableHttpLogging = false,
         )
     }
 
@@ -225,11 +225,11 @@ class AuthleteLightProfileTest {
         )
         val credentialOfferUri = Authlete.requestAuthorizationCodeGrantOffer(credCfgIds)
         val issuer = assertDoesNotThrow {
-            Authlete.createIssuer(credentialOfferUri.toString(), enableHttLogging = false)
+            Authlete.createIssuer(credentialOfferUri.toString(), enableHttpLogging = false)
         }
         assertTrue { credCfgIds.all { it in issuer.credentialOffer.credentialConfigurationIdentifiers } }
         val outcome = with(issuer) {
-            val authorizedRequest = authorizeUsingAuthorizationCodeFlow(Authlete, enableHttLogging = false)
+            val authorizedRequest = authorizeUsingAuthorizationCodeFlow(Authlete, enableHttpLogging = false)
             submitBatchCredentialRequest(authorizedRequest, credCfgIds)
         }
         ensureIssued(outcome)

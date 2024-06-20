@@ -107,6 +107,6 @@ class PanasonicZetesTest {
 
     @Test
     fun `Issue mso_mdoc credential using light profile`() = runBlocking {
-        PanasonicZetes.testIssuanceWithAuthorizationCodeFlow(PanasonicZetes.LightProfileCfgId, enableHttLogging = true)
+        PanasonicZetes.testIssuanceWithAuthorizationCodeFlow(PanasonicZetes.LightProfileCfgId, enableHttpLogging = true)
     }
 }
