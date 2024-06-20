@@ -86,14 +86,14 @@ class BdrTest {
 
     @Test
     fun `Resolve issuer metadata`() = runTest {
-        Bdr.testMetaDataResolution(enableHttLogging = false)
+        Bdr.testMetaDataResolution(enableHttpLogging = false)
     }
 
     @Test
     fun `Issue mDL in mso_mdoc using light profile, CWT proofs`() = runTest {
         Bdr.testIssuanceWithAuthorizationCodeFlow(
             Bdr.LspPotentialInteropT1Light,
-            enableHttLogging = false,
+            enableHttpLogging = false,
             ProofTypeMetaPreference.FavorCWT,
         )
     }
@@ -102,7 +102,7 @@ class BdrTest {
     fun `Issue mDL in mso_mdoc using light profile, JWT proofs`() = runTest {
         Bdr.testIssuanceWithAuthorizationCodeFlow(
             Bdr.LspPotentialInteropT1Light,
-            enableHttLogging = false,
+            enableHttpLogging = false,
             ProofTypeMetaPreference.FavorJWT,
         )
     }
@@ -111,7 +111,7 @@ class BdrTest {
     fun `Issue PID in sd-jwt-vc sing light profile, CWT proofs`() = runBlocking {
         Bdr.testIssuanceWithAuthorizationCodeFlow(
             Bdr.LspPotentialInteropT2Light,
-            enableHttLogging = false,
+            enableHttpLogging = false,
             ProofTypeMetaPreference.FavorCWT,
         )
     }
@@ -120,7 +120,7 @@ class BdrTest {
     fun `Issue PID in sd-jwt-vc using light profile, JWT proofs`() = runTest {
         Bdr.testIssuanceWithAuthorizationCodeFlow(
             Bdr.LspPotentialInteropT2Light,
-            enableHttLogging = false,
+            enableHttpLogging = false,
             ProofTypeMetaPreference.FavorJWT,
         )
     }
