@@ -45,7 +45,7 @@ private object Matr :
     override val issuerId = IssuerId
 
     override val cfg = OpenId4VCIConfig(
-        clientId = "", // We need to get it from MATR
+        clientId = "wallet-dev", // We need to get it from MATR
         authFlowRedirectionURI = URI.create("https://oauthdebugger.com/debug"), // needs to be replaced with our wallet's redirect_uri
         keyGenerationConfig = KeyGenerationConfig(Curve.P_256, 2048),
         credentialResponseEncryptionPolicy = CredentialResponseEncryptionPolicy.SUPPORTED,
