@@ -119,17 +119,17 @@ class IdemiaTest {
 
     @Test
     fun `Resolve issuer metadata`() = runTest {
-        Idemia.testMetaDataResolution(enableHttLogging = false)
+        Idemia.testMetaDataResolution(enableHttpLogging = false)
     }
 
     @Test
     fun `Issue mDL credential using light profile`() = runBlocking {
-        Idemia.testIssuanceWithAuthorizationCodeFlow(Idemia.mDL, enableHttLogging = false)
+        Idemia.testIssuanceWithAuthorizationCodeFlow(Idemia.mDL, enableHttpLogging = false)
     }
 
     @Test
     fun `Issue pid credential using authorization code flow`() = runBlocking {
-        Idemia.testIssuanceWithAuthorizationCodeFlow(Idemia.pid, enableHttLogging = false)
+        Idemia.testIssuanceWithAuthorizationCodeFlow(Idemia.pid, enableHttpLogging = false)
     }
 
     @Test
@@ -140,11 +140,11 @@ class IdemiaTest {
         )
         val credentialOfferUri = Idemia.requestAuthorizationCodeGrantOffer(credCfgIds)
         val issuer = assertDoesNotThrow {
-            Idemia.createIssuer(credentialOfferUri.toString(), enableHttLogging = true)
+            Idemia.createIssuer(credentialOfferUri.toString(), enableHttpLogging = true)
         }
         assertTrue { credCfgIds.all { it in issuer.credentialOffer.credentialConfigurationIdentifiers } }
         val outcome = with(issuer) {
-            val authorizedRequest = authorizeUsingAuthorizationCodeFlow(Idemia, enableHttLogging = false)
+            val authorizedRequest = authorizeUsingAuthorizationCodeFlow(Idemia, enableHttpLogging = false)
             submitBatchCredentialRequest(authorizedRequest, credCfgIds)
         }
         ensureIssued(outcome)
