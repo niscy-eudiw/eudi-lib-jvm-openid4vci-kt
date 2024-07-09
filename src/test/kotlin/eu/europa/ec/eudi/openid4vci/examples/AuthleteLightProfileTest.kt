@@ -77,42 +77,43 @@ private object Authlete :
         issuerStateIncluded = true,
     )
 
-    override suspend fun requestCredentialOffer(httpClient: HttpClient, form: CredentialOfferForm<User>): URI = coroutineScope {
-        val url = "$BASE_URL/api/offer/issue"
-        suspend fun HttpClient.visitOfferPage() = get(url).body<String>()
-        suspend fun HttpClient.requestOffer(): String {
-            val formParameters = Parameters.build {
-                checkNotNull(form.user) { "User is required" }
-                append("loginId", form.user.loginId)
-                append("password", form.user.password)
-                fun Set<CredentialConfigurationIdentifier>.toJson() = JsonArray(map { JsonPrimitive(it.value) })
-                append("credentialConfigurationIds", form.credentialConfigurationIds.toJson().toString())
-                if (form.authorizationCodeGrant != null) {
-                    append("authorizationCodeGrantIncluded", "on")
-                    if (form.authorizationCodeGrant.issuerStateIncluded) {
-                        append("issuerStateIncluded", "on")
+    override suspend fun requestCredentialOffer(httpClient: HttpClient, form: CredentialOfferForm<User>): URI =
+        coroutineScope {
+            val url = "$BASE_URL/api/offer/issue"
+            suspend fun HttpClient.visitOfferPage() = get(url).body<String>()
+            suspend fun HttpClient.requestOffer(): String {
+                val formParameters = Parameters.build {
+                    checkNotNull(form.user) { "User is required" }
+                    append("loginId", form.user.loginId)
+                    append("password", form.user.password)
+                    fun Set<CredentialConfigurationIdentifier>.toJson() = JsonArray(map { JsonPrimitive(it.value) })
+                    append("credentialConfigurationIds", form.credentialConfigurationIds.toJson().toString())
+                    if (form.authorizationCodeGrant != null) {
+                        append("authorizationCodeGrantIncluded", "on")
+                        if (form.authorizationCodeGrant.issuerStateIncluded) {
+                            append("issuerStateIncluded", "on")
+                        }
+                    }
+                    if (form.preAuthorizedCodeGrant != null) {
+                        append("preAuthorizedCodeGrantIncluded", "on")
+                        form.preAuthorizedCodeGrant.txCode?.let { append("txCode", it) }
+                        append("txCodeInputMode", form.preAuthorizedCodeGrant.txCodeInputMode)
+                        form.preAuthorizedCodeGrant.txCodeDescription?.let { append("txCodeDescription", it) }
+                    }
+                    if (form.credentialOfferEndpoint != null) {
+                        append("credentialOfferEndpoint", form.credentialOfferEndpoint)
                     }
                 }
-                if (form.preAuthorizedCodeGrant != null) {
-                    append("preAuthorizedCodeGrantIncluded", "on")
-                    form.preAuthorizedCodeGrant.txCode?.let { append("txCode", it) }
-                    append("txCodeInputMode", form.preAuthorizedCodeGrant.txCodeInputMode)
-                    form.preAuthorizedCodeGrant.txCodeDescription?.let { append("txCodeDescription", it) }
-                }
-                if (form.credentialOfferEndpoint != null) {
-                    append("credentialOfferEndpoint", form.credentialOfferEndpoint)
-                }
+                return submitForm(url, formParameters).body<String>()
             }
-            return submitForm(url, formParameters).body<String>()
-        }
 
-        // Perform a GET to establish session
-        val html = with(httpClient) {
-            visitOfferPage()
-            requestOffer()
+            // Perform a GET to establish session
+            val html = with(httpClient) {
+                visitOfferPage()
+                requestOffer()
+            }
+            absoluteHRefs(html).first { "?credential_offer=" in it }.let { URI.create(it) }
         }
-        absoluteHRefs(html).first { "?credential_offer=" in it }.let { URI.create(it) }
-    }
 
     private suspend fun absoluteHRefs(html: String): List<String> = withContext(Dispatchers.IO) {
         Jsoup.parse(html)
@@ -149,7 +150,8 @@ class AuthleteLightProfileTest {
         val requestForCredentialOffer = Authlete.LightProfileCredentialOfferForm
         val credentialOffer = assertDoesNotThrow {
             createHttpClient(enableLogging = false).use { httpClient ->
-                val credentialOfferUri = Authlete.requestCredentialOffer(httpClient, requestForCredentialOffer).toString()
+                val credentialOfferUri =
+                    Authlete.requestCredentialOffer(httpClient, requestForCredentialOffer).toString()
                 if (requestForCredentialOffer.credentialOfferEndpoint != null) {
                     assertTrue { credentialOfferUri.startsWith(requestForCredentialOffer.credentialOfferEndpoint) }
                 }
@@ -228,10 +230,11 @@ class AuthleteLightProfileTest {
             Authlete.createIssuer(credentialOfferUri.toString(), enableHttpLogging = false)
         }
         assertTrue { credCfgIds.all { it in issuer.credentialOffer.credentialConfigurationIdentifiers } }
-        val outcome = with(issuer) {
-            val authorizedRequest = authorizeUsingAuthorizationCodeFlow(Authlete, enableHttpLogging = false)
-            submitBatchCredentialRequest(authorizedRequest, credCfgIds)
-        }
+        val (_, outcome) =
+            with(issuer) {
+                val authorizedRequest = authorizeUsingAuthorizationCodeFlow(Authlete, enableHttpLogging = false)
+                submitBatchCredentialRequest(authorizedRequest, credCfgIds)
+            }
         ensureIssued(outcome)
         Unit
     }
@@ -240,31 +243,22 @@ class AuthleteLightProfileTest {
 private suspend fun Issuer.submitBatchCredentialRequest(
     authorizedRequest: AuthorizedRequest,
     credentialConfigurationIds: List<CredentialConfigurationIdentifier>,
-): SubmittedRequest {
-    val reqs = buildMap<IssuanceRequestPayload, PopSigner?> {
-        for (credentialConfigurationId in credentialConfigurationIds) {
-            //
-            // This is a hack
-            //
-            val cfg = credentialOffer.credentialIssuerMetadata.credentialConfigurationsSupported[credentialConfigurationId]
-            assertNotNull(cfg)
-
-            val requestPayload = IssuanceRequestPayload.ConfigurationBased(credentialConfigurationId, null)
-            val popSigner = when (authorizedRequest) {
-                is AuthorizedRequest.ProofRequired -> popSigner(credentialConfigurationId, ProofTypeMetaPreference.FavorJWT)
-                is AuthorizedRequest.NoProofRequired -> null
+): AuthorizedRequestAnd<SubmissionOutcome> {
+    val reqs: List<Pair<IssuanceRequestPayload, PopSigner?>> =
+        buildList {
+            for (credentialConfigurationId in credentialConfigurationIds) {
+                //
+                // This is a hack
+                //
+                val credentialConfigurationsSupported =
+                    credentialOffer.credentialIssuerMetadata.credentialConfigurationsSupported
+                val cfg = credentialConfigurationsSupported[credentialConfigurationId]
+                assertNotNull(cfg)
+                val requestPayload = IssuanceRequestPayload.ConfigurationBased(credentialConfigurationId)
+                val popSigner = popSigner(credentialConfigurationId, ProofTypeMetaPreference.FavorJWT)
+                add(requestPayload to popSigner)
             }
-            put(requestPayload, popSigner)
-        }
-    }
-
-    return when (authorizedRequest) {
-        is AuthorizedRequest.ProofRequired -> with(authorizedRequest) {
-            requestBatch(reqs.mapValues { (_, v) -> checkNotNull(v) }.toList())
         }
 
-        is AuthorizedRequest.NoProofRequired -> with(authorizedRequest) {
-            requestBatch(reqs.keys.toList())
-        }
-    }.getOrThrow()
+    return authorizedRequest.requestBatchAndUpdateState(reqs).getOrThrow()
 }
