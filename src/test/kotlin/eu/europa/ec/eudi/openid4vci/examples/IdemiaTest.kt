@@ -143,7 +143,7 @@ class IdemiaTest {
             Idemia.createIssuer(credentialOfferUri.toString(), enableHttpLogging = true)
         }
         assertTrue { credCfgIds.all { it in issuer.credentialOffer.credentialConfigurationIdentifiers } }
-        val outcome = with(issuer) {
+        val (_, outcome) = with(issuer) {
             val authorizedRequest = authorizeUsingAuthorizationCodeFlow(Idemia, enableHttpLogging = false)
             submitBatchCredentialRequest(authorizedRequest, credCfgIds)
         }
@@ -155,7 +155,7 @@ class IdemiaTest {
 private suspend fun Issuer.submitBatchCredentialRequest(
     authorizedRequest: AuthorizedRequest,
     credentialConfigurationIds: List<CredentialConfigurationIdentifier>,
-): SubmittedRequest {
+): AuthorizedRequestAnd<SubmissionOutcome> {
     val reqs: List<Pair<IssuanceRequestPayload, PopSigner?>> = buildList {
         for (credentialConfigurationId in credentialConfigurationIds) {
             val cfg = credentialOffer.credentialIssuerMetadata.credentialConfigurationsSupported[credentialConfigurationId]
@@ -169,14 +169,5 @@ private suspend fun Issuer.submitBatchCredentialRequest(
         }
     }
 
-    return when (authorizedRequest) {
-        is AuthorizedRequest.ProofRequired -> with(authorizedRequest) {
-            require(reqs.all { (_, v) -> v != null })
-            requestBatch(reqs as List<Pair<IssuanceRequestPayload, PopSigner>>)
-        }
-
-        is AuthorizedRequest.NoProofRequired -> with(authorizedRequest) {
-            requestBatch(reqs.map { (ir, _) -> ir }.toList())
-        }
-    }.getOrThrow()
+    return authorizedRequest.requestBatch(reqs).getOrThrow()
 }
