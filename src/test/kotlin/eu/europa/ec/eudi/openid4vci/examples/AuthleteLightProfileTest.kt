@@ -260,5 +260,5 @@ private suspend fun Issuer.submitBatchCredentialRequest(
             }
         }
 
-    return authorizedRequest.requestBatchAndUpdateState(reqs).getOrThrow()
+    return authorizedRequest.requestBatch(reqs).getOrThrow()
 }
