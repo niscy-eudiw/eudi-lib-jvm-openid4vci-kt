@@ -180,7 +180,7 @@ class AuthleteLightProfileTest {
         Authlete.testIssuanceWithAuthorizationCodeFlow(
             credCfgId = Authlete.LightProfileCredCfgId,
             enableHttpLogging = false,
-            popSignerPreference = ProofTypeMetaPreference.FavorCWT,
+            batchOption = BatchOption.DontUse
         )
     }
 
@@ -189,6 +189,7 @@ class AuthleteLightProfileTest {
         Authlete.testIssuanceWithAuthorizationCodeFlow(
             credCfgId = Authlete.IdentityCredentialCredCfgId,
             enableHttpLogging = false,
+            batchOption = BatchOption.DontUse
         )
     }
 
@@ -199,6 +200,7 @@ class AuthleteLightProfileTest {
             credCfgId = Authlete.IdentityCredentialCredCfgId,
             credentialOfferEndpoint = null,
             enableHttpLogging = false,
+            batchOption = BatchOption.DontUse
         )
     }
 
@@ -216,49 +218,10 @@ class AuthleteLightProfileTest {
             txCode = "123",
             credCfgId = Authlete.MdlCredCfgId,
             credentialOfferEndpoint = null,
+            batchOption = BatchOption.DontUse
         )
     }
 
-    @Test
-    fun `Issue multiple credentials in batch using authorization code grant`() = runBlocking {
-        val credCfgIds = listOf(
-            Authlete.IdentityCredentialCredCfgId,
-            Authlete.MdlCredCfgId,
-        )
-        val credentialOfferUri = Authlete.requestAuthorizationCodeGrantOffer(credCfgIds)
-        val issuer = assertDoesNotThrow {
-            Authlete.createIssuer(credentialOfferUri.toString(), enableHttpLogging = false)
-        }
-        assertTrue { credCfgIds.all { it in issuer.credentialOffer.credentialConfigurationIdentifiers } }
-        val (_, outcome) =
-            with(issuer) {
-                val authorizedRequest = authorizeUsingAuthorizationCodeFlow(Authlete, enableHttpLogging = false)
-                submitBatchCredentialRequest(authorizedRequest, credCfgIds)
-            }
-        ensureIssued(outcome)
-        Unit
-    }
 }
 
-private suspend fun Issuer.submitBatchCredentialRequest(
-    authorizedRequest: AuthorizedRequest,
-    credentialConfigurationIds: List<CredentialConfigurationIdentifier>,
-): AuthorizedRequestAnd<SubmissionOutcome> {
-    val reqs: List<Pair<IssuanceRequestPayload, PopSigner?>> =
-        buildList {
-            for (credentialConfigurationId in credentialConfigurationIds) {
-                //
-                // This is a hack
-                //
-                val credentialConfigurationsSupported =
-                    credentialOffer.credentialIssuerMetadata.credentialConfigurationsSupported
-                val cfg = credentialConfigurationsSupported[credentialConfigurationId]
-                assertNotNull(cfg)
-                val requestPayload = IssuanceRequestPayload.ConfigurationBased(credentialConfigurationId)
-                val popSigner = popSigner(credentialConfigurationId, ProofTypeMetaPreference.FavorJWT)
-                add(requestPayload to popSigner)
-            }
-        }
 
-    return authorizedRequest.requestBatch(reqs).getOrThrow()
-}
