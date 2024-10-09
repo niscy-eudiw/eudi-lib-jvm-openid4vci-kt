@@ -35,6 +35,7 @@ import kotlin.test.assertContains
 import kotlin.test.assertEquals
 
 private val IssuerId = CredentialIssuerId("https://launchpad.vii.proton.mattrlabs.io").getOrThrow()
+
 private object Matr :
     HasIssuerId,
     CanBeUsedWithVciLib,
@@ -109,38 +110,21 @@ class MatrTest {
     }
 
     @Test
-    fun `Issue mDL credential using light profile with CWT proof`() = runBlocking {
-        Matr.testIssuanceWithAuthorizationCodeFlow(
-            Matr.LightProfileCredCfgId,
-            enableHttpLogging = false,
-            popSignerPreference = ProofTypeMetaPreference.FavorCWT,
-        )
-    }
-
-    @Test
     fun `Issue mDL credential using light profile with JWT proof`() = runBlocking {
         Matr.testIssuanceWithAuthorizationCodeFlow(
             Matr.LightProfileCredCfgId,
             enableHttpLogging = false,
-            popSignerPreference = ProofTypeMetaPreference.FavorJWT,
+            batchOption = BatchOption.DontUse
         )
     }
 
-    @Test
-    fun `Issue pid in mso_mdoc using auth code flow with CWT proof`() = runBlocking {
-        Matr.testIssuanceWithAuthorizationCodeFlow(
-            Matr.pid,
-            enableHttpLogging = false,
-            popSignerPreference = ProofTypeMetaPreference.FavorCWT,
-        )
-    }
 
     @Test
     fun `Issue pid in mso_mdoc using auth code flow with JWT proof`() = runBlocking {
         Matr.testIssuanceWithAuthorizationCodeFlow(
             Matr.pid,
             enableHttpLogging = false,
-            popSignerPreference = ProofTypeMetaPreference.FavorJWT,
+            batchOption = BatchOption.DontUse,
         )
     }
 }

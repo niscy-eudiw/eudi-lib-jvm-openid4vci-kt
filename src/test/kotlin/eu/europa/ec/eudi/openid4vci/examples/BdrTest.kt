@@ -20,7 +20,6 @@ import eu.europa.ec.eudi.openid4vci.*
 import io.ktor.client.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.DisplayName
 import java.net.URI
@@ -90,29 +89,11 @@ class BdrTest {
     }
 
     @Test
-    fun `Issue mDL in mso_mdoc using light profile, CWT proofs`() = runTest {
-        Bdr.testIssuanceWithAuthorizationCodeFlow(
-            Bdr.LspPotentialInteropT1Light,
-            enableHttpLogging = false,
-            ProofTypeMetaPreference.FavorCWT,
-        )
-    }
-
-    @Test
     fun `Issue mDL in mso_mdoc using light profile, JWT proofs`() = runTest {
         Bdr.testIssuanceWithAuthorizationCodeFlow(
             Bdr.LspPotentialInteropT1Light,
             enableHttpLogging = false,
-            ProofTypeMetaPreference.FavorJWT,
-        )
-    }
-
-    @Test
-    fun `Issue PID in sd-jwt-vc sing light profile, CWT proofs`() = runBlocking {
-        Bdr.testIssuanceWithAuthorizationCodeFlow(
-            Bdr.LspPotentialInteropT2Light,
-            enableHttpLogging = false,
-            ProofTypeMetaPreference.FavorCWT,
+            batchOption = BatchOption.DontUse
         )
     }
 
@@ -121,7 +102,7 @@ class BdrTest {
         Bdr.testIssuanceWithAuthorizationCodeFlow(
             Bdr.LspPotentialInteropT2Light,
             enableHttpLogging = false,
-            ProofTypeMetaPreference.FavorJWT,
+            batchOption = BatchOption.DontUse
         )
     }
 }

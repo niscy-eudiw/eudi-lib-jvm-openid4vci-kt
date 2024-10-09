@@ -26,15 +26,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.DisplayName
-import org.junit.jupiter.api.assertDoesNotThrow
 import org.openqa.selenium.By
 import org.openqa.selenium.WebElement
 import java.net.URI
 import java.time.Clock
 import java.time.Duration
 import kotlin.test.Test
-import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
 
 private val IssuerId =
     CredentialIssuerId("https://interop-service.rac-shared.staging.identity-dev.idemia.io").getOrThrow()
@@ -132,42 +129,4 @@ class IdemiaTest {
         Idemia.testIssuanceWithAuthorizationCodeFlow(Idemia.pid, enableHttpLogging = false)
     }
 
-    @Test
-    fun `Issue multiple credentials in batch using authorization code grant`() = runBlocking {
-        val credCfgIds = listOf(
-            Idemia.mDL,
-            Idemia.mDL,
-        )
-        val credentialOfferUri = Idemia.requestAuthorizationCodeGrantOffer(credCfgIds)
-        val issuer = assertDoesNotThrow {
-            Idemia.createIssuer(credentialOfferUri.toString(), enableHttpLogging = true)
-        }
-        assertTrue { credCfgIds.all { it in issuer.credentialOffer.credentialConfigurationIdentifiers } }
-        val (_, outcome) = with(issuer) {
-            val authorizedRequest = authorizeUsingAuthorizationCodeFlow(Idemia, enableHttpLogging = false)
-            submitBatchCredentialRequest(authorizedRequest, credCfgIds)
-        }
-        ensureIssued(outcome)
-        Unit
-    }
-}
-
-private suspend fun Issuer.submitBatchCredentialRequest(
-    authorizedRequest: AuthorizedRequest,
-    credentialConfigurationIds: List<CredentialConfigurationIdentifier>,
-): AuthorizedRequestAnd<SubmissionOutcome> {
-    val reqs: List<Pair<IssuanceRequestPayload, PopSigner?>> = buildList {
-        for (credentialConfigurationId in credentialConfigurationIds) {
-            val cfg = credentialOffer.credentialIssuerMetadata.credentialConfigurationsSupported[credentialConfigurationId]
-            assertNotNull(cfg)
-            val requestPayload = IssuanceRequestPayload.ConfigurationBased(credentialConfigurationId, null)
-            val popSigner = when (authorizedRequest) {
-                is AuthorizedRequest.ProofRequired -> popSigner(credentialConfigurationId, ProofTypeMetaPreference.FavorJWT)
-                is AuthorizedRequest.NoProofRequired -> null
-            }
-            add(requestPayload to popSigner)
-        }
-    }
-
-    return authorizedRequest.requestBatch(reqs).getOrThrow()
 }
