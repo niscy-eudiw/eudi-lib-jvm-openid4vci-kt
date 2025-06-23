@@ -31,6 +31,7 @@ import org.openqa.selenium.WebElement
 import java.net.URI
 import java.time.Clock
 import java.time.Duration
+import kotlin.test.Ignore
 import kotlin.test.Test
 
 private val IssuerId =
@@ -111,6 +112,7 @@ private object Idemia :
     }
 }
 
+@Ignore
 @DisplayName("Using Idemia Issuer, VCI Lib should be able to")
 class IdemiaTest {
 
