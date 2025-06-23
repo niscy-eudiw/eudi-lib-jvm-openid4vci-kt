@@ -114,10 +114,9 @@ class MatrTest {
         Matr.testIssuanceWithAuthorizationCodeFlow(
             Matr.LightProfileCredCfgId,
             enableHttpLogging = false,
-            batchOption = BatchOption.DontUse
+            batchOption = BatchOption.DontUse,
         )
     }
-
 
     @Test
     fun `Issue pid in mso_mdoc using auth code flow with JWT proof`() = runBlocking {

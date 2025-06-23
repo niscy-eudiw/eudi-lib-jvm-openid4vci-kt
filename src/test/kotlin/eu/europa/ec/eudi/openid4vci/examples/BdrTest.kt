@@ -93,7 +93,7 @@ class BdrTest {
         Bdr.testIssuanceWithAuthorizationCodeFlow(
             Bdr.LspPotentialInteropT1Light,
             enableHttpLogging = false,
-            batchOption = BatchOption.DontUse
+            batchOption = BatchOption.DontUse,
         )
     }
 
@@ -102,7 +102,7 @@ class BdrTest {
         Bdr.testIssuanceWithAuthorizationCodeFlow(
             Bdr.LspPotentialInteropT2Light,
             enableHttpLogging = false,
-            batchOption = BatchOption.DontUse
+            batchOption = BatchOption.DontUse,
         )
     }
 }
