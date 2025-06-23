@@ -128,5 +128,4 @@ class IdemiaTest {
     fun `Issue pid credential using authorization code flow`() = runBlocking {
         Idemia.testIssuanceWithAuthorizationCodeFlow(Idemia.pid, enableHttpLogging = false)
     }
-
 }

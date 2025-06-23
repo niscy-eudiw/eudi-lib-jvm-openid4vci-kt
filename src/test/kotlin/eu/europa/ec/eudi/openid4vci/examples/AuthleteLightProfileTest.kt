@@ -180,7 +180,7 @@ class AuthleteLightProfileTest {
         Authlete.testIssuanceWithAuthorizationCodeFlow(
             credCfgId = Authlete.LightProfileCredCfgId,
             enableHttpLogging = false,
-            batchOption = BatchOption.DontUse
+            batchOption = BatchOption.DontUse,
         )
     }
 
@@ -189,7 +189,7 @@ class AuthleteLightProfileTest {
         Authlete.testIssuanceWithAuthorizationCodeFlow(
             credCfgId = Authlete.IdentityCredentialCredCfgId,
             enableHttpLogging = false,
-            batchOption = BatchOption.DontUse
+            batchOption = BatchOption.DontUse,
         )
     }
 
@@ -200,7 +200,7 @@ class AuthleteLightProfileTest {
             credCfgId = Authlete.IdentityCredentialCredCfgId,
             credentialOfferEndpoint = null,
             enableHttpLogging = false,
-            batchOption = BatchOption.DontUse
+            batchOption = BatchOption.DontUse,
         )
     }
 
@@ -218,10 +218,7 @@ class AuthleteLightProfileTest {
             txCode = "123",
             credCfgId = Authlete.MdlCredCfgId,
             credentialOfferEndpoint = null,
-            batchOption = BatchOption.DontUse
+            batchOption = BatchOption.DontUse,
         )
     }
-
 }
-
-
