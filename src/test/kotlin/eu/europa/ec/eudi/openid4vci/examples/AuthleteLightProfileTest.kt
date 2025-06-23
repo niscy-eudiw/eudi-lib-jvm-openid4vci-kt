@@ -138,6 +138,7 @@ private object Authlete :
 }
 
 @DisplayName("Using Authlete trial Issuer, VCI Lib should be able to")
+@Ignore
 class AuthleteLightProfileTest {
 
     @Test
@@ -156,7 +157,7 @@ class AuthleteLightProfileTest {
                     assertTrue { credentialOfferUri.startsWith(requestForCredentialOffer.credentialOfferEndpoint) }
                 }
 
-                val resolver = DefaultCredentialOfferRequestResolver(httpClient)
+                val resolver = DefaultCredentialOfferRequestResolver(httpClient, IssuerMetadataPolicy.IgnoreSigned)
                 resolver.resolve(credentialOfferUri).getOrThrow()
             }
         }

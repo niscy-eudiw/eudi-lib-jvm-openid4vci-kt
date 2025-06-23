@@ -24,6 +24,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.DisplayName
 import java.net.URI
 import java.time.Clock
+import kotlin.test.Ignore
 import kotlin.test.Test
 
 private val IssuerId = CredentialIssuerId("https://issuer-openid4vc.ssi.tir.budru.de/openid-gain").getOrThrow()
@@ -81,6 +82,7 @@ private object Bdr :
 }
 
 @DisplayName("Using BDR Issuer, VCI Lib should be able to")
+@Ignore
 class BdrTest {
 
     @Test

@@ -30,6 +30,7 @@ import org.openqa.selenium.By
 import java.net.URI
 import java.time.Clock
 import java.time.Duration
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
@@ -100,6 +101,7 @@ private object Matr :
 }
 
 @DisplayName("Using MATR Issuer, VCI Lib should be able to")
+@Ignore
 class MatrTest {
 
     @Test
