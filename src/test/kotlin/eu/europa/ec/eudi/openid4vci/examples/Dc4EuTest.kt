@@ -1,5 +1,19 @@
+/*
+ * Copyright (c) 2023 European Commission
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package eu.europa.ec.eudi.openid4vci.examples
-
 
 import com.nimbusds.jose.jwk.Curve
 import eu.europa.ec.eudi.openid4vci.*
@@ -45,7 +59,6 @@ internal object Dc4EuIssuer :
     val EHIC = CredentialConfigurationIdentifier("urn:eudi:ehic:1")
     val DIPLOMA = CredentialConfigurationIdentifier("urn:credential:diploma")
 
-
     override suspend fun loginUserAndGetAuthCode(
         authorizationRequestPrepared: AuthorizationRequestPrepared,
         user: Dc4EuUser,
@@ -88,18 +101,16 @@ internal object Dc4EuIssuer :
                     driver.findElement(By.ByCssSelector("a.credential")).click()
                     delay(threeSeconds.toMillis())
 
-
                     driver.findElement(By.ById("DiplomaSelection")).submit()
 
                     delay(threeSeconds.toMillis())
-                    val redirectUrl =driver.currentUrl
+                    val redirectUrl = driver.currentUrl
                     redirectUrl
                 }
             }
-            codeAndStateFromUrl(redirected.await()).also {(code, status)->
+            codeAndStateFromUrl(redirected.await()).also { (code, status) ->
                 println("code $code")
                 println("status $status")
-
             }
         }
     }
@@ -107,25 +118,21 @@ internal object Dc4EuIssuer :
     override suspend fun HttpClient.authorizeIssuance(loginResponse: HttpResponse, user: Dc4EuUser): HttpResponse {
         return loginResponse
     }
-
 }
 
 class Dc4EuTest {
 
     @Test
     fun resolveCredentialIssuerMetadata() = runTest {
-
         val (credentialIssuerMetadata, authServersMetadata) =
             Dc4EuIssuer.testMetaDataResolution(true)
 
         for ((id, cfg) in credentialIssuerMetadata.credentialConfigurationsSupported) {
-
             println("--> Credential configuration id: $id")
             println("    -> Credential configuration display name: ${cfg.display.firstOrNull()?.name}")
             println("    -> Credential configuration scope: ${cfg.scope}")
         }
     }
-
 
     @Test
     fun `issue EHIC`() = runTest {
@@ -135,5 +142,4 @@ class Dc4EuTest {
             batchOption = BatchOption.Specific(1),
         )
     }
-
 }
