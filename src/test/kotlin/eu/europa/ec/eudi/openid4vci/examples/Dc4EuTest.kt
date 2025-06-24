@@ -15,6 +15,7 @@
  */
 package eu.europa.ec.eudi.openid4vci.examples
 
+import arrow.fx.coroutines.use
 import com.nimbusds.jose.jwk.Curve
 import eu.europa.ec.eudi.openid4vci.*
 import io.ktor.client.*
@@ -73,9 +74,8 @@ internal object Dc4EuIssuer :
         }
         return coroutineScope {
             val redirected = async {
-                ResourceWrapper.chromeDriver().use { wrapper ->
+                chromeDriver().use { driver ->
                     val threeSeconds = Duration.ofSeconds(3)
-                    val driver = wrapper.resource
                     val authorizeUrl = authorizationRequestPrepared.authorizationCodeURL.toString()
 
                     driver.manage().timeouts().implicitlyWait(threeSeconds)

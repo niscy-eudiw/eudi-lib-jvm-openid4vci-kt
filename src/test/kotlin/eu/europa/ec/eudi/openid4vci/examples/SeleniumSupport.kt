@@ -15,26 +15,14 @@
  */
 package eu.europa.ec.eudi.openid4vci.examples
 
+import arrow.fx.coroutines.Resource
+import arrow.fx.coroutines.resource
 import org.openqa.selenium.chrome.ChromeDriver
-import java.io.Closeable
 
-interface ResourceWrapper<R> : Closeable {
-    val resource: R
+internal object SeleniumSupport
 
-    companion object {
-        operator fun <R> invoke(create: () -> R, close: R.() -> Unit): ResourceWrapper<R> =
-            object : ResourceWrapper<R> {
-                override val resource: R
-                    get() = create.invoke()
-
-                override fun close() {
-                    resource.close()
-                }
-            }
-
-        fun chromeDriver(create: (() -> ChromeDriver)? = null): ResourceWrapper<ChromeDriver> =
-            invoke(create = create ?: { ChromeDriver() }, close = ChromeDriver::quit)
-    }
-}
-
-internal object SeleniumSupport //
+internal fun chromeDriver(ac: () -> ChromeDriver = { ChromeDriver() }): Resource<ChromeDriver> =
+    resource(
+        acquire = ac,
+        release = { driver, _ -> driver.quit() },
+    )

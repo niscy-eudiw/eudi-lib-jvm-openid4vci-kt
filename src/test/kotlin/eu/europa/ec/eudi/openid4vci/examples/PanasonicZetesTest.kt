@@ -15,6 +15,7 @@
  */
 package eu.europa.ec.eudi.openid4vci.examples
 
+import arrow.fx.coroutines.use
 import com.nimbusds.jose.jwk.Curve
 import eu.europa.ec.eudi.openid4vci.*
 import io.ktor.client.*
@@ -66,8 +67,7 @@ private object PanasonicZetes :
             return r.parameters["code"].toString() to r.parameters["state"].toString()
         }
         val url = authorizationRequestPrepared.authorizationCodeURL.toString()
-        val redirect = ResourceWrapper.chromeDriver().use { wrapper ->
-            val driver = wrapper.resource
+        val redirect = chromeDriver().use { driver ->
             driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5))
             driver.get(url)
             val authorizeButton = driver.findElement(By.id("authorize"))
@@ -82,8 +82,7 @@ private object PanasonicZetes :
     ): HttpResponse = loginResponse
 
     override suspend fun requestCredentialOffer(httpClient: HttpClient, form: CredentialOfferForm<NoUser>): URI {
-        return ResourceWrapper.chromeDriver().use { wrapper ->
-            val driver = wrapper.resource
+        return chromeDriver().use { driver ->
             driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5))
             driver.get(issuerId.toString())
             val showDocumentButton = driver.findElement(By.xpath("/html/body/div[1]/div/div[2]/table/tbody/tr/td[4]/button"))

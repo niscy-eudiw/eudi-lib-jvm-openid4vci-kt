@@ -15,6 +15,7 @@
  */
 package eu.europa.ec.eudi.openid4vci.examples
 
+import arrow.fx.coroutines.use
 import com.nimbusds.jose.jwk.Curve
 import eu.europa.ec.eudi.openid4vci.*
 import io.ktor.client.*
@@ -59,8 +60,7 @@ private object Idemia :
     val pid = CredentialConfigurationIdentifier("eu.europa.ec.eudi.pid.1")
 
     override suspend fun requestCredentialOffer(httpClient: HttpClient, form: CredentialOfferForm<NoUser>): URI {
-        val uri = ResourceWrapper.chromeDriver().use { wrapper ->
-            val driver = wrapper.resource
+        val uri = chromeDriver().use { driver ->
             driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(3))
             driver.get("https://interop-service.rac-shared.staging.identity-dev.idemia.io/openid4vci.html")
             val credentialOfferLink: WebElement = driver.findElement(By.linkText("Link"))
@@ -85,9 +85,8 @@ private object Idemia :
         }
         return coroutineScope {
             val redirected = async {
-                ResourceWrapper.chromeDriver().use { wrapper ->
+                chromeDriver().use { driver ->
                     val threeSeconds = Duration.ofSeconds(3)
-                    val driver = wrapper.resource
                     val authorizeUrl = authorizationRequestPrepared.authorizationCodeURL.toString()
 
                     driver.manage().timeouts().implicitlyWait(threeSeconds)
