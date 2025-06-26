@@ -23,14 +23,14 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
 import org.openqa.selenium.By
+import org.openqa.selenium.chrome.ChromeDriver
 import org.openqa.selenium.support.ui.Select
 import java.net.URI
-import java.time.Duration
 import kotlin.test.Test
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.toJavaDuration
 
 private const val BASE_URL = "https://demo-issuer.wwwallet.org"
 private val IssuerId = CredentialIssuerId(BASE_URL).getOrThrow()
@@ -58,7 +58,8 @@ internal object Dc4EuIssuer :
     )
 
     val EHIC = CredentialConfigurationIdentifier("urn:eudi:ehic:1")
-    val DIPLOMA = CredentialConfigurationIdentifier("urn:credential:diploma")
+
+    private val threeSeconds = 3.seconds
 
     override suspend fun loginUserAndGetAuthCode(
         authorizationRequestPrepared: AuthorizationRequestPrepared,
@@ -66,52 +67,43 @@ internal object Dc4EuIssuer :
         enableHttpLogging: Boolean,
     ): Pair<String, String> {
         fun codeAndStateFromUrl(url: String): Pair<String, String> {
-            require(url.startsWith(cfg.authFlowRedirectionURI.toString())) { "Invalid redirect_uri $url" }
+            check(url.startsWith(cfg.authFlowRedirectionURI.toString())) { "Invalid redirect_uri $url" }
             val r = URLBuilder(url).build()
             val code = checkNotNull(r.parameters["code"]) { "Missing code" }
             val state = checkNotNull(r.parameters["state"]) { "Missing state" }
             return code to state
         }
+        fun setup() = ChromeDriver().apply {
+            with(manage().timeouts()) {
+                implicitlyWait(threeSeconds.toJavaDuration())
+                scriptTimeout(threeSeconds.toJavaDuration())
+                pageLoadTimeout(threeSeconds.toJavaDuration())
+            }
+        }
         return coroutineScope {
             val redirected = async {
-                chromeDriver().use { driver ->
-                    val threeSeconds = Duration.ofSeconds(3)
-                    val authorizeUrl = authorizationRequestPrepared.authorizationCodeURL.toString()
+                chromeDriver(::setup).use { driver ->
+                    // Visit the authorization page (front-channel)
+                    driver.get(authorizationRequestPrepared.authorizationCodeURL.toString())
 
-                    driver.manage().timeouts().implicitlyWait(threeSeconds)
-                    driver.manage().timeouts().scriptTimeout(threeSeconds)
-                    driver.manage().timeouts().pageLoadTimeout(threeSeconds)
+                    // Choose the authentication method SSO
+                    Select(driver.findElement(By.id("authMethodDropdown"))).selectByValue("SSO")
+                    driver.findElement(By.id("mainBtn")).click()
 
-                    driver.get(authorizeUrl)
-                    val dropDown = driver.findElement(By.id("authMethodDropdown"))
-                    Select(dropDown).selectByValue("SSO")
-
-                    val proceedButton = driver.findElement(By.id("mainBtn"))
-                    delay(threeSeconds.toMillis())
-                    proceedButton.click()
-                    delay(threeSeconds.toMillis())
-
+                    // Visit the login page
                     driver.findElement(By.id("username")).sendKeys(user.username)
                     driver.findElement(By.id("password")).sendKeys(user.password)
-                    delay(threeSeconds.toMillis())
                     driver.findElement(By.id("login")).click()
-                    delay(threeSeconds.toMillis())
 
-                    delay(3.seconds)
+                    // Visit the consent page
                     driver.findElement(By.ByCssSelector("a.credential")).click()
-                    delay(threeSeconds.toMillis())
-
                     driver.findElement(By.ById("DiplomaSelection")).submit()
 
-                    delay(threeSeconds.toMillis())
-                    val redirectUrl = driver.currentUrl
-                    redirectUrl
+                    // Grab the redirect uri
+                    driver.currentUrl
                 }
             }
-            codeAndStateFromUrl(redirected.await()).also { (code, status) ->
-                println("code $code")
-                println("status $status")
-            }
+            codeAndStateFromUrl(redirected.await())
         }
     }
 
@@ -123,23 +115,11 @@ internal object Dc4EuIssuer :
 class Dc4EuTest {
 
     @Test
-    fun resolveCredentialIssuerMetadata() = runTest {
-        val (credentialIssuerMetadata, authServersMetadata) =
-            Dc4EuIssuer.testMetaDataResolution(true)
-
-        for ((id, cfg) in credentialIssuerMetadata.credentialConfigurationsSupported) {
-            println("--> Credential configuration id: $id")
-            println("    -> Credential configuration display name: ${cfg.display.firstOrNull()?.name}")
-            println("    -> Credential configuration scope: ${cfg.scope}")
-        }
-    }
-
-    @Test
     fun `issue EHIC`() = runTest {
         Dc4EuIssuer.testIssuanceWithAuthorizationCodeFlow(
             credCfgId = Dc4EuIssuer.EHIC,
             enableHttpLogging = true,
-            batchOption = BatchOption.Specific(1),
+            batchOption = BatchOption.Specific(2),
         )
     }
 }
