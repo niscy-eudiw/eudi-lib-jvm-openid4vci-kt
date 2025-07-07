@@ -19,6 +19,7 @@ import eu.europa.ec.eudi.openid4vci.CredentialConfigurationIdentifier
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.DisplayName
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -59,7 +60,7 @@ class PidDevIssuerTest {
         )
     }
 
-    @Test @Ignore
+    @Test
     fun `Issue EHIC in sd-jwt vc compact using authorize code flow and JWT proofs`() = runTest {
         repeatBatchIssuanceUsingAuthorizationCodeFlow(
             PidDevIssuer.EHIC_Compact_config_id,

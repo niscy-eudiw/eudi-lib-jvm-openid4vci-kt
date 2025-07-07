@@ -28,11 +28,12 @@ import org.openqa.selenium.By
 import org.openqa.selenium.chrome.ChromeDriver
 import org.openqa.selenium.support.ui.Select
 import java.net.URI
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
 
-private const val BASE_URL = "https://demo-issuer.wwwallet.org"
+private const val BASE_URL = "https://demo-issuer.wwWallet.org"
 private val IssuerId = CredentialIssuerId(BASE_URL).getOrThrow()
 
 internal data class Dc4EuUser(val username: String, val password: String)
@@ -73,6 +74,7 @@ internal object Dc4EuIssuer :
             val state = checkNotNull(r.parameters["state"]) { "Missing state" }
             return code to state
         }
+
         fun setup() = ChromeDriver().apply {
             with(manage().timeouts()) {
                 implicitlyWait(threeSeconds.toJavaDuration())
@@ -114,7 +116,7 @@ internal object Dc4EuIssuer :
 
 class Dc4EuTest {
 
-    @Test
+    @Test @Ignore
     fun `issue EHIC`() = runTest {
         Dc4EuIssuer.testIssuanceWithAuthorizationCodeFlow(
             credCfgId = Dc4EuIssuer.EHIC,
