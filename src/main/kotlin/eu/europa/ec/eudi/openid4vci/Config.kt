@@ -23,7 +23,6 @@ import com.nimbusds.jose.crypto.RSAEncrypter
 import com.nimbusds.jose.crypto.impl.ContentCryptoProvider
 import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
-import eu.europa.ec.eudi.openid4vci.ParUsage.*
 import java.net.URI
 import java.time.Clock
 
@@ -51,11 +50,6 @@ sealed interface ClientAuthentication : java.io.Serializable {
         val attestationJWT: ClientAttestationJWT,
         val popJwtSpec: ClientAttestationPoPJWTSpec,
     ) : ClientAuthentication {
-        init {
-            require(attestationJWT.clientId.isNotBlank())
-            require(!attestationJWT.publicKey.isPrivate) { "InstanceKey should be public" }
-        }
-
         override val id: ClientId get() = attestationJWT.clientId
     }
 }
