@@ -74,6 +74,7 @@ sealed interface ClientAuthentication : java.io.Serializable {
  * @param parUsage whether to use PAR in case of authorization code grant
  * @param clock Wallet's clock
  * @param issuerMetadataPolicy policy concerning signed metadata usage
+ * @param supportedReuseMethods the reuse methods supported by the wallet. If empty, all methods are assumed supported.
  */
 data class OpenId4VCIConfig(
     val clientAuthentication: ClientAuthentication,
@@ -85,6 +86,7 @@ data class OpenId4VCIConfig(
     val parUsage: ParUsage = ParUsage.IfSupported,
     val clock: Clock = Clock.systemDefaultZone(),
     val issuerMetadataPolicy: IssuerMetadataPolicy = IssuerMetadataPolicy.IgnoreSigned,
+    val supportedReuseMethods: Set<ReuseMethod> = emptySet(),
 ) {
 
     /**
@@ -100,6 +102,7 @@ data class OpenId4VCIConfig(
         parUsage: ParUsage = ParUsage.IfSupported,
         clock: Clock = Clock.systemDefaultZone(),
         issuerMetadataPolicy: IssuerMetadataPolicy = IssuerMetadataPolicy.IgnoreSigned,
+        supportedReuseMethods: Set<ReuseMethod> = emptySet(),
     ) : this(
         ClientAuthentication.None(clientId),
         authFlowRedirectionURI,
@@ -110,6 +113,7 @@ data class OpenId4VCIConfig(
         parUsage,
         clock,
         issuerMetadataPolicy,
+        supportedReuseMethods,
     )
 
     @Deprecated(
