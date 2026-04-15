@@ -18,6 +18,7 @@ package eu.europa.ec.eudi.openid4vci
 import com.nimbusds.jose.CompressionAlgorithm
 import com.nimbusds.jose.EncryptionMethod
 import com.nimbusds.jose.JWEAlgorithm
+import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.crypto.ECDHEncrypter
 import com.nimbusds.jose.crypto.RSAEncrypter
 import com.nimbusds.jose.crypto.impl.ContentCryptoProvider
@@ -69,6 +70,7 @@ sealed interface ClientAuthentication : java.io.Serializable {
  * @param clock Wallet's clock
  * @param issuerMetadataPolicy policy concerning signed metadata usage
  * @param supportedCredentialReusePolicies the reuse policies supported by the wallet, used to validate against credential issuer metadata.
+ * @param proofs proofs supported by the Wallet
  */
 data class OpenId4VCIConfig(
     val clientAuthentication: ClientAuthentication,
@@ -81,11 +83,14 @@ data class OpenId4VCIConfig(
     val clock: Clock = Clock.systemDefaultZone(),
     val issuerMetadataPolicy: IssuerMetadataPolicy = IssuerMetadataPolicy.IgnoreSigned,
     val supportedCredentialReusePolicies: CredentialReusePolicies? = null,
+    val proofs: ProofsConfig,
 ) {
 
     /**
-     * Creates a new [OpenId4VCIConfig] instance for a Wallet that uses [a Public OAuth 2.0 Client][ClientAuthentication.None].
+     * Creates a new [OpenId4VCIConfig] instance for a Wallet that uses [a Public OAuth 2.0 Client][ClientAuthentication.None], and all
+     * [Proof Types][ProofsConfig].
      */
+    @Deprecated(message = "Replace with the primary constructor")
     constructor(
         clientId: ClientId,
         authFlowRedirectionURI: URI,
@@ -108,12 +113,13 @@ data class OpenId4VCIConfig(
         clock,
         issuerMetadataPolicy,
         supportedCredentialReusePolicies,
+        ProofsConfig.All,
     )
 
     /**
-     * Creates a new [OpenId4VCIConfig] instance for a Wallet.
+     * Creates a new [OpenId4VCIConfig] instance for a Wallet that supports all [Proof Types][ProofsConfig].
      */
-    @Deprecated(message = "Replace with the constructor that uses DPoPUsage.")
+    @Deprecated(message = "Replace with the primary constructor")
     constructor (
         clientAuthentication: ClientAuthentication,
         authFlowRedirectionURI: URI,
@@ -136,12 +142,14 @@ data class OpenId4VCIConfig(
         clock,
         issuerMetadataPolicy,
         supportedCredentialReusePolicies,
+        ProofsConfig.All,
     )
 
     /**
-     * Creates a new [OpenId4VCIConfig] instance for a Wallet that uses [a Public OAuth 2.0 Client][ClientAuthentication.None].
+     * Creates a new [OpenId4VCIConfig] instance for a Wallet that uses [a Public OAuth 2.0 Client][ClientAuthentication.None], and
+     * supports all [Proof Types][ProofsConfig].
      */
-    @Deprecated(message = "Replace with the constructor that uses DPoPUsage.")
+    @Deprecated(message = "Replace with the primary constructor")
     constructor(
         clientId: ClientId,
         authFlowRedirectionURI: URI,
@@ -164,6 +172,7 @@ data class OpenId4VCIConfig(
         clock,
         issuerMetadataPolicy,
         supportedCredentialReusePolicies,
+        ProofsConfig.All,
     )
 
     @Deprecated(
@@ -369,4 +378,54 @@ sealed interface IssuerMetadataPolicy {
      * Signed metadata are ignored. Only values conveyed using plain json elements are used.
      */
     data object IgnoreSigned : IssuerMetadataPolicy
+}
+
+/**
+ * Wallet supported Proofs.
+ *
+ * A Wallet has to configure whether it supports non-device-bound attestations, as well as the Proofs supported for device-bound attestations.
+ *
+ * @property supportsDeviceBound Whether the Wallet supports non-device-bound attestations.
+ * @property deviceBound Whether the Wallet supports device-bound attestations, and the Proofs it supports.
+ */
+data class ProofsConfig(
+    val supportsNonDeviceBound: Boolean,
+    val deviceBound: DeviceBound?,
+) {
+    val supportsDeviceBound: Boolean
+        get() = null != deviceBound
+
+    companion object {
+        val All: ProofsConfig = ProofsConfig(
+            supportsNonDeviceBound = true,
+            deviceBound = DeviceBound(null, DeviceBound.Proof.entries.toSet()),
+        )
+
+        val None: ProofsConfig = ProofsConfig(
+            supportsNonDeviceBound = false,
+            deviceBound = null,
+        )
+    }
+
+    /**
+     * The Proofs a Wallet supports for device-bound attestations.
+     *
+     * @property algorithms The JWS Algorithms the Wallet supports for device-bound attestations. Set to *null* if the Wallet supports all algorithms.
+     * @property proofs The Proofs the Wallet supports for device-bound attestations.
+     */
+    data class DeviceBound(
+        val algorithms: Set<JWSAlgorithm>?,
+        val proofs: Set<Proof>,
+    ) {
+        init {
+            require(null == algorithms || algorithms.isNotEmpty()) { "At least one algorithm must be supported" }
+            require(proofs.isNotEmpty()) { "At least one proof must be supported" }
+        }
+
+        enum class Proof {
+            JwtProofWithoutKeyAttestation,
+            JwtProofWithKeyAttestation,
+            AttestationProof,
+        }
+    }
 }
