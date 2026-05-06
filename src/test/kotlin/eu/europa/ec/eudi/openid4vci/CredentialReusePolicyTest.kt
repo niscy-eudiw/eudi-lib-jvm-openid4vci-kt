@@ -316,7 +316,7 @@ internal class CredentialReusePolicyTest {
                 encryptionSupportConfig = EncryptionSupportConfig.invoke(Curve.P_256, 2048, CredentialResponseEncryptionPolicy.SUPPORTED),
                 dPoPUsage = DPoPUsage.Never,
                 supportedCredentialReusePolicies = CredentialReusePolicies.Supported(setOf(EudiReusePolicyType.RotatingBatch)),
-                proofs = ProofsConfig.All,
+                proofs = ProofsConfig.EC,
             )
         }
     }
@@ -330,7 +330,7 @@ internal class CredentialReusePolicyTest {
                 encryptionSupportConfig = EncryptionSupportConfig.invoke(Curve.P_256, 2048, CredentialResponseEncryptionPolicy.SUPPORTED),
                 dPoPUsage = DPoPUsage.Never,
                 supportedCredentialReusePolicies = CredentialReusePolicies.Supported(setOf(EudiReusePolicyType.OnceOnly)),
-                proofs = ProofsConfig.All,
+                proofs = ProofsConfig.EC,
             )
         }
     }

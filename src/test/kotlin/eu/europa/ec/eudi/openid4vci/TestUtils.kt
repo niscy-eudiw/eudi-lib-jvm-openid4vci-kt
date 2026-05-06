@@ -18,6 +18,7 @@ package eu.europa.ec.eudi.openid4vci
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.Curve
 import eu.europa.ec.eudi.openid4vci.CryptoGenerator.ecSigner
+import eu.europa.ec.eudi.openid4vci.ProofsConfig.DeviceBound
 import io.ktor.client.*
 import java.net.URI
 import java.util.*
@@ -89,7 +90,7 @@ val OpenId4VCIConfiguration = OpenId4VCIConfig(
     authFlowRedirectionURI = URI.create("eudi-wallet//auth"),
     encryptionSupportConfig = EncryptionSupportConfig(Curve.P_256, 2048, CredentialResponseEncryptionPolicy.SUPPORTED),
     dPoPUsage = DPoPUsage.Never,
-    proofs = ProofsConfig.All,
+    proofs = ProofsConfig.EC,
 )
 
 val OpenId4VCIConfigurationWithDpopSigner = OpenId4VCIConfig(
@@ -102,7 +103,7 @@ val OpenId4VCIConfigurationWithDpopSigner = OpenId4VCIConfig(
             alg = JWSAlgorithm.ES256,
         ),
     ),
-    proofs = ProofsConfig.All,
+    proofs = ProofsConfig.EC,
 )
 
 suspend fun authorizeRequestForCredentialOffer(
@@ -161,3 +162,20 @@ fun CredentialReusePolicy.effectiveBatchSize(supportedReusePolicies: CredentialR
 
         CredentialReusePolicy.None -> null
     }
+
+internal val ProofsConfig.Companion.EC: ProofsConfig
+    get() = ProofsConfig(
+        supportsNonDeviceBound = true,
+        deviceBound = DeviceBound(
+            setOf(
+                JWSAlgorithm.ES256,
+                JWSAlgorithm.ES384,
+                JWSAlgorithm.ES512,
+            ),
+            setOf(
+                DeviceBound.Proof.JwtProofWithoutKeyAttestation,
+                DeviceBound.Proof.JwtProofWithKeyAttestation,
+                DeviceBound.Proof.AttestationProof,
+            ),
+        ),
+    )
