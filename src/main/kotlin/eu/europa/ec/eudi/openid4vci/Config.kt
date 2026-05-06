@@ -400,11 +400,6 @@ data class ProofsConfig(
             supportsNonDeviceBound = true,
             deviceBound = DeviceBound(null, DeviceBound.Proof.entries.toSet()),
         )
-
-        val None: ProofsConfig = ProofsConfig(
-            supportsNonDeviceBound = false,
-            deviceBound = null,
-        )
     }
 
     /**

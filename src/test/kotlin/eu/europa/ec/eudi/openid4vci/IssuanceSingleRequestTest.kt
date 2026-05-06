@@ -1070,7 +1070,7 @@ class IssuanceSingleRequestTest {
                 tokenPostMocker(),
             )
             val (authorizedRequest, issuer) = authorizeRequestForCredentialOffer(
-                config = OpenId4VCIConfiguration.copy(proofs = ProofsConfig.None),
+                config = OpenId4VCIConfiguration.copy(proofs = ProofsConfig(false, null)),
                 credentialOfferStr = CredentialOfferWithMDLMdoc_NO_GRANTS,
                 httpClient = mockedHttpClient,
             )
@@ -1095,7 +1095,7 @@ class IssuanceSingleRequestTest {
                 tokenPostMocker(),
             )
             val (authorizedRequest, issuer) = authorizeRequestForCredentialOffer(
-                config = OpenId4VCIConfiguration.copy(proofs = ProofsConfig.None),
+                config = OpenId4VCIConfiguration.copy(proofs = ProofsConfig(false, null)),
                 credentialOfferStr = CredentialOfferWithSdJwtVc_NO_GRANTS,
                 httpClient = mockedHttpClient,
             )
