@@ -36,7 +36,7 @@ typealias ClientId = String
 interface ProvisionClientAttestation {
     val algorithm: JWSAlgorithm
 
-    suspend operator fun invoke(authorizationServer: HttpsUrl): Provisioned
+    suspend operator fun invoke(authorizationServer: HttpsUrl, preferredClientStatusPeriod: PositiveDuration?): Provisioned
 
     data class Provisioned(
         val clientAttestation: ClientAttestationJWT,

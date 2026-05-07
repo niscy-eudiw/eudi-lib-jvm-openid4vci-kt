@@ -309,6 +309,7 @@ internal class DefaultCredentialIssuerMetadataResolverTest {
 
             val issuerMetadata = credentialIssuerMetadata().copy(
                 credentialResponseEncryption = CredentialResponseEncryption.NotSupported,
+                preferredClientStatusPeriod = null,
             )
 
             val metadata = assertDoesNotThrow { resolver.resolve(credentialIssuerId, policy).getOrThrow() }
@@ -418,6 +419,40 @@ internal class DefaultCredentialIssuerMetadataResolverTest {
         )
         val policy = IssuerMetadataPolicy.RequireSigned(IssuerTrust.ByCertificateChain { true })
         assertDoesNotThrow { resolver.resolve(credentialIssuerId, policy).getOrThrow() }
+    }
+
+    @Test
+    internal fun `resolution fails when preferred_client_status_period is negative`() = runTest {
+        val credentialIssuerId = SampleIssuer.Id
+
+        val resolver = resolver(
+            credentialIssuerMetaDataHandler(
+                credentialIssuerId,
+                "eu/europa/ec/eudi/openid4vci/internal/credential_issuer_metadata_negative_preferred_client_status_period.json",
+            ),
+        )
+        val exception = assertFailsWith<InvalidPreferredClientStatusPeriod> {
+            resolver.resolve(credentialIssuerId, IssuerMetadataPolicy.IgnoreSigned).getOrThrow()
+        }
+        val cause = assertIs<IllegalArgumentException>(exception.cause)
+        assertEquals("duration must be greater than 0", cause.message)
+    }
+
+    @Test
+    internal fun `resolution fails when preferred_client_status_period is zero`() = runTest {
+        val credentialIssuerId = SampleIssuer.Id
+
+        val resolver = resolver(
+            credentialIssuerMetaDataHandler(
+                credentialIssuerId,
+                "eu/europa/ec/eudi/openid4vci/internal/credential_issuer_metadata_zero_preferred_client_status_period.json",
+            ),
+        )
+        val exception = assertFailsWith<InvalidPreferredClientStatusPeriod> {
+            resolver.resolve(credentialIssuerId, IssuerMetadataPolicy.IgnoreSigned).getOrThrow()
+        }
+        val cause = assertIs<IllegalArgumentException>(exception.cause)
+        assertEquals("duration must be greater than 0", cause.message)
     }
 }
 

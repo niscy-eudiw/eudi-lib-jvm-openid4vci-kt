@@ -32,6 +32,7 @@ import kotlinx.serialization.json.*
 import java.net.URI
 import java.net.URL
 import java.security.cert.X509Certificate
+import java.time.Duration
 import java.time.Instant
 import java.util.*
 
@@ -225,4 +226,14 @@ object URLSerializer : KSerializer<URL> {
     }
 
     override fun deserialize(decoder: Decoder): URL = URI.create(decoder.decodeString()).toURL()
+}
+
+object DurationSecondsSerializer : KSerializer<Duration> {
+    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("DurationSecondsSerializer", PrimitiveKind.LONG)
+
+    override fun serialize(encoder: Encoder, value: Duration) {
+        encoder.encodeLong(value.toSeconds())
+    }
+
+    override fun deserialize(decoder: Decoder): Duration = Duration.ofSeconds(decoder.decodeLong(), 0L)
 }

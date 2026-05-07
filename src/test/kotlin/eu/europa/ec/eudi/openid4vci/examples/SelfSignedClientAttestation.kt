@@ -61,7 +61,7 @@ internal fun selfSignedClient(
     duration: Duration = 10.minutes,
     keyType: KeyType? = null,
     userAuthentication: UserAuthentication? = null,
-    headerCustomization: JWSHeader.Builder.() -> Unit = {},
+    asserter: (HttpsUrl, PositiveDuration?) -> Unit = { _, _ -> },
 ): ClientAuthentication.AttestationBased {
     val algorithm = walletInstanceKey.jwsAlgorithm
     val signer = DefaultJWSSignerFactory().createJWSSigner(walletInstanceKey, algorithm)
@@ -75,14 +75,19 @@ internal fun selfSignedClient(
                 userAuthentication = userAuthentication,
             ),
         )
-        val builder = ClientAttestationJwtBuilder(clock, duration, algorithm, signer, claims, headerCustomization)
+        val builder = ClientAttestationJwtBuilder(clock, duration, algorithm, signer, claims)
         builder.build()
     }
     val popJwtSpec = ClientAttestationPoPJWTSpec(Signer.fromNimbusEcKey(walletInstanceKey, walletInstanceKey.toPublicJWK(), null, null))
     val provisionClientAttestation = object : ProvisionClientAttestation {
         override val algorithm: JWSAlgorithm = clientAttestationJWT.jwt.header.algorithm
-        override suspend fun invoke(authorizationServer: HttpsUrl): ProvisionClientAttestation.Provisioned =
-            ProvisionClientAttestation.Provisioned(clientAttestationJWT, popJwtSpec)
+        override suspend fun invoke(
+            authorizationServer: HttpsUrl,
+            preferredClientStatusPeriod: PositiveDuration?,
+        ): ProvisionClientAttestation.Provisioned {
+            asserter(authorizationServer, preferredClientStatusPeriod)
+            return ProvisionClientAttestation.Provisioned(clientAttestationJWT, popJwtSpec)
+        }
     }
     return ClientAuthentication.AttestationBased(clientId, provisionClientAttestation)
 }

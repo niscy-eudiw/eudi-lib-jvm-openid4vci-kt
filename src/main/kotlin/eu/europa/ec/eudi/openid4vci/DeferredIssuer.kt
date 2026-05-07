@@ -41,6 +41,7 @@ import java.time.Clock
  * @param responseEncryptionParams encryption method and compression algorithm as/if used in the initial request.
  * @param dPoPSigner the signer that was used for DPoP. Must be provided only if DPoP was used.
  * @param clock Wallet's clock
+ * @param preferredClientStatusPeriod PID or Attestation Provider's preference for the remaining status maintenance period
  */
 data class DeferredIssuerConfig(
     val credentialIssuerId: CredentialIssuerId,
@@ -53,6 +54,7 @@ data class DeferredIssuerConfig(
     val responseEncryptionParams: Pair<EncryptionMethod, CompressionAlgorithm?>?,
     val dPoPSigner: Signer<JWK>? = null,
     val clock: Clock = Clock.systemDefaultZone(),
+    val preferredClientStatusPeriod: PositiveDuration? = null,
 )
 
 /**
@@ -173,7 +175,7 @@ interface DeferredIssuer : RefreshAccessToken, QueryForDeferredCredential {
                 when (val clientAuthentication = config.clientAuthentication) {
                     is ClientAuthentication.AttestationBased -> {
                         val authorizationServer = HttpsUrl(config.authorizationServerId.toExternalForm()).getOrThrow()
-                        clientAuthentication.provisionClientAttestation(authorizationServer)
+                        clientAuthentication.provisionClientAttestation(authorizationServer, config.preferredClientStatusPeriod)
                     }
                     else -> null
                 }

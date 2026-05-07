@@ -26,6 +26,7 @@ import eu.europa.ec.eudi.openid4vci.internal.ensure
 import io.ktor.client.*
 import java.io.Serializable
 import java.net.URL
+import java.time.Duration
 
 sealed interface CredentialRequestEncryption : Serializable {
     data object NotSupported : CredentialRequestEncryption {
@@ -145,6 +146,19 @@ sealed interface BatchCredentialIssuance : Serializable {
     }
 }
 
+@JvmInline
+value class PositiveDuration(val value: Duration) {
+    init {
+        require(!value.isNegative && !value.isZero) { "duration must be greater than 0" }
+    }
+
+    override fun toString(): String = value.toString()
+
+    companion object {
+        fun of(value: Duration): Result<PositiveDuration> = runCatching { PositiveDuration(value) }
+    }
+}
+
 /**
  * The metadata of a Credential Issuer.
  */
@@ -160,6 +174,7 @@ data class CredentialIssuerMetadata(
     val batchCredentialIssuance: BatchCredentialIssuance = BatchCredentialIssuance.NotSupported,
     val credentialConfigurationsSupported: Map<CredentialConfigurationIdentifier, CredentialConfiguration>,
     val display: List<Display> = emptyList(),
+    val preferredClientStatusPeriod: PositiveDuration? = null,
 ) : Serializable {
 
     init {
@@ -338,6 +353,11 @@ sealed class CredentialIssuerMetadataValidationError(cause: Throwable) : Credent
 
     class InvalidBatchSize :
         CredentialIssuerMetadataValidationError(IllegalArgumentException("batch_size should be greater than zero"))
+
+    /**
+     * `preferred_client_status_period` advertised by Credential Issuer is invalid.
+     */
+    class InvalidPreferredClientStatusPeriod(cause: Throwable) : CredentialIssuerMetadataValidationError(cause)
 }
 
 /**

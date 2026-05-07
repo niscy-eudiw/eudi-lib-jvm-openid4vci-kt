@@ -115,6 +115,8 @@ object RFC7519 {
 object TS3 {
     val WALLET_INSTANCE_ATTESTATION_ALLOWED_SIGNATURE_ALGORITHMS: Set<JWSAlgorithm> =
         setOf(JWSAlgorithm.ES256, JWSAlgorithm.ES384, JWSAlgorithm.ES512)
+
+    const val PREFERRED_CLIENT_STATUS_PERIOD: String = "preferred_client_status_period"
 }
 
 object ETSI4723 {

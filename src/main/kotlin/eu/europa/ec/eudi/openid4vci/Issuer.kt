@@ -125,7 +125,10 @@ interface Issuer :
                 when (val clientAuthentication = config.clientAuthentication) {
                     is ClientAuthentication.AttestationBased -> {
                         val authorizationServer = HttpsUrl(credentialOffer.authorizationServerMetadata.issuer.value).getOrThrow()
-                        val provisionedClientAttestation = clientAuthentication.provisionClientAttestation(authorizationServer)
+                        val provisionedClientAttestation = clientAuthentication.provisionClientAttestation(
+                            authorizationServer,
+                            credentialOffer.credentialIssuerMetadata.preferredClientStatusPeriod,
+                        )
                         provisionedClientAttestation.ensureSupportedByAuthorizationServer(credentialOffer.authorizationServerMetadata)
                         provisionedClientAttestation
                     }
